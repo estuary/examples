@@ -43,3 +43,13 @@ services:
 
     ports:
       - "5432:5432"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'tcp postgres:5432'
+    ports:
+      - 4040:4040
