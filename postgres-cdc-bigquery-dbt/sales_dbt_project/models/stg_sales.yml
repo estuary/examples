@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: stg_sales
+    description: "Model for sales data."
+    columns:
+      - name: sale_id
+        description: "Unique identifier for each sale."
+      - name: _meta_op
+        description: "Delete/update/insert."
+      - name: customer_id
+        description: "Identifier for the customer associated with the sale."
+      - name: flow_published_at
+        description: "Timestamp of when the sale flow was published."
+      - name: product_id
+        description: "Identifier for the product sold."
+      - name: quantity
+        description: "Quantity of the product sold."
+      - name: sale_date
+        description: "Date of the sale."
+      - name: total_price
+        description: "Total price of the sale."
+      - name: unit_price
+        description: "Unit price of the product."
+      - name: flow_document
+        description: "Document representing the sales flow."

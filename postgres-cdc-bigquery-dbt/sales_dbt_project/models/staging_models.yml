@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: estuary
+    database: estuary-theatre
+    schema: dani_dev
+    tables:
+      - name: sales2
