@@ -3,3 +3,6 @@
 **/logs
 
 **/*.env
+=======
+.env
+__pycache__
