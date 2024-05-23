@@ -2,4 +2,4 @@
 
 This projects showcases the components of a CDC data flow that streams data from PostgreSQL into BigQuery, then transforms the results with dbt.
 
-See blog post for details: 
+See blog post for details: https://estuary.dev/efficient-elt-with-estuary-flow-and-dbt/
