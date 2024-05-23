@@ -1,0 +1,45 @@
+services:
+
+  datagen:
+    build: datagen
+    container_name: sql-server-datagen
+    restart: unless-stopped
+
+    environment:
+      DB_HOST: sql-server
+      DB_PORT: 1433
+      DB_NAME: SampleDB
+      DB_USER: sa
+      DB_PASSWORD: "SuperSecurePassword1"
+
+    depends_on:
+      sql-server:
+        condition: service_healthy
+
+  sql-server:
+    container_name: sql-server
+    build: sqlserver
+    restart: always
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "SuperSecurePassword1"
+      ACCEPT_EULA: "Y"
+      MSSQL_AGENT_ENABLED: true
+      MSSQL_PID: "Developer"
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: sql-server-ngrok
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'tcp sql-server:1433'
+    ports:
+      - 4040:4040
