@@ -1,0 +1,4 @@
+Faker==25.1.0
+pygsheets==2.0.6
+python-dotenv
+openai
