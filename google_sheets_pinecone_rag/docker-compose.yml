@@ -1,0 +1,24 @@
+services:
+  datagen:
+    build: datagen
+    container_name: gsheet-ai-datagen
+    restart: unless-stopped
+
+    environment:
+      SHEET_NAME: "Fake Customer Support"
+      WORKSHEET_NAME: "Support Requests"
+
+    volumes:
+      - /path-to-gcp-service-account-cred.json:/credentials.json  # edit
+
+  streamlit:
+    build: .
+    container_name: streamlit
+
+    ports:
+      - 8501:8501
+
+    environment:
+      PINECONE_API_KEY: "" # edit
+      PINECONE_HOST: ""  # edit
+      OPENAI_API_KEY: "" # edit

@@ -1,0 +1,4 @@
+streamlit
+llama-index
+llama-index-vector-stores-pinecone
+python-dotenv
