@@ -1,0 +1,4 @@
+Faker==25.1.0
+python-dotenv
+openai
+snowflake-connector-python
