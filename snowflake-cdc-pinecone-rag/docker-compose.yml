@@ -1,0 +1,30 @@
+services:
+  datagen:
+    build: datagen
+    container_name: snowflake-cdc-datagen
+    restart: unless-stopped
+
+    environment:
+      SNOWFLAKE_ACCOUNT: ""
+      SNOWFLAKE_USER: ""
+      SNOWFLAKE_PASSWORD: ""
+      SNOWFLAKE_ROLE: ""
+      SNOWFLAKE_WAREHOUSE: ""
+      SNOWFLAKE_DATABASE: ""
+      SNOWFLAKE_SCHEMA: ""
+      SNOWFLAKE_TABLE: ""
+
+    volumes:
+      - /path-to-gcp-service-account-cred.json:/credentials.json  # edit
+
+  streamlit:
+    build: .
+    container_name: snowflake-cdc-streamlit
+
+    ports:
+      - 8501:8501
+
+    environment:
+      PINECONE_API_KEY: "" # edit
+      PINECONE_HOST: ""  # edit
+      OPENAI_API_KEY: "" # edit
