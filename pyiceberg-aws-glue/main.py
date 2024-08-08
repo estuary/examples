@@ -17,12 +17,11 @@ catalog = GlueCatalog(
 
 print(catalog.list_namespaces())
 
-print(catalog.list_tables(namespace="dani-ns"))
+print(catalog.list_tables(namespace=os.getenv("NAMESPACE")))
 
-table = catalog.load_table("dani-ns.support_requests")
+table = catalog.load_table(f"{os.getenv('NAMESPACE')}.support_requests")
 
 df = table.scan(
-    # row_filter="trip_distance >= 10.0",
     selected_fields=(
         "customer_id",
         "description",
@@ -32,5 +31,7 @@ df = table.scan(
         "status",
     ),
 ).to_pandas()
+
+print(df.describe())
 
 print(df.head())
