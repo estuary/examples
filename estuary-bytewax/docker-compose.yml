@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   datagen:
     build: datagen
@@ -14,10 +12,31 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      retries: 30
     ports:
       - "27017:27017"
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--keyFile", "/etc/mongo/mongodb-keyfile"]
     volumes:
       - mongo-data:/data/db
+#      - ./mongodb/mongo-initjs.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - ./mongodb/mongodb-keyfile:/etc/mongo/mongodb-keyfile:ro
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: bytewax-ngrok
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'tcp mongodb:27017'
+    ports:
+      - "4040:4040"
 
 volumes:
   mongo-data:
