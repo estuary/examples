@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient
 
 # MongoDB connection details (replace with your actual details)
-client = MongoClient(f'mongodb://adminUser:adminPassword@mongodb:27017?authSource=admin')
+client = MongoClient(f'mongodb://root:password@mongodb:27017')
 
 db = client["space_tourism"]
 collection = db["bookings"]

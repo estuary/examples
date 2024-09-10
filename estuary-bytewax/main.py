@@ -282,8 +282,8 @@ def parse_message(msg):
 
 
 # Calculate metrics for the current window
-def calculate_metrics(key__values):
-    key, values = key__values
+def calculate_metrics(key__win_id__values):
+    key, (window_id, values) = key__win_id__values
     total_bookings = sum(1 for v in values if v["operation"] in ["insert", "update"])
     total_cancellations = sum(1 for v in values if v["operation"] == "delete")
     total_passengers = sum(
@@ -343,9 +343,9 @@ cc = EventClock(
 align_to = datetime(2024, 9, 1, tzinfo=timezone.utc)
 wc = TumblingWindower(align_to=align_to, length=timedelta(minutes=5))
 
-windowed_msgs = w.collect_window("windowed-msgs", msgs, wc, cc)
+windowed_msgs = w.collect_window("windowed-msgs", msgs, cc, wc)
 
 op.inspect("windowed", windowed_msgs.down)
 
-# computed = op.map("compute", windowed_msgs.down, calculate_metrics)
-# op.output("output", computed, StdOutSink())
+computed = op.map("compute", windowed_msgs.down, calculate_metrics)
+op.output("output", computed, StdOutSink())

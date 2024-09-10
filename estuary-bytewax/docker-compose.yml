@@ -11,7 +11,7 @@ services:
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_PASSWORD: password
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -25,8 +25,7 @@ services:
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--keyFile", "/etc/mongo/mongodb-keyfile"]
     volumes:
       - mongo-data:/data/db
-#      - ./mongodb/mongo-initjs.js:/docker-entrypoint-initdb.d/mongo-init.js
-      - ./mongodb/mongodb-keyfile:/etc/mongo/mongodb-keyfile:ro
+      - ./mongodb/keyfile:/etc/mongo/mongodb-keyfile:ro
 
   ngrok:
     image: ngrok/ngrok:latest
