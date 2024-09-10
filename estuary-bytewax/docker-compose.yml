@@ -1,0 +1,42 @@
+services:
+  datagen:
+    build: datagen
+    container_name: bytewax-datagen
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    hostname: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      retries: 30
+    ports:
+      - "27017:27017"
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--keyFile", "/etc/mongo/mongodb-keyfile"]
+    volumes:
+      - mongo-data:/data/db
+      - ./mongodb/keyfile:/etc/mongo/mongodb-keyfile:ro
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: bytewax-ngrok
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'tcp mongodb:27017'
+    ports:
+      - "4040:4040"
+
+volumes:
+  mongo-data:
+    driver: local

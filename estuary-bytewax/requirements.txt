@@ -1,0 +1,3 @@
+bytewax[confluent_kafka]==0.21
+python-dotenv==1.0.1
+
