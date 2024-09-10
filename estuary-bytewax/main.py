@@ -6,7 +6,6 @@ import bytewax.operators as op
 import bytewax.operators.windowing as w
 from bytewax.connectors.stdio import StdOutSink
 from bytewax.dataflow import Dataflow
-from bytewax.testing import TestingSource
 from bytewax.operators.windowing import TumblingWindower, EventClock
 from bytewax.connectors.kafka import KafkaSource
 
