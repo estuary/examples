@@ -1,4 +1,4 @@
-import { IDerivation, Document, SourceFromImpressions, SourceFromClicks } from 'flow/Dani/demo-ads/ad-clicks-by-platform.ts';
+import { IDerivation, Document, SourceFromImpressions, SourceFromClicks } from 'flow/dani-demo/demo-ad-performance/ad-clicks-by-platform.ts';
 
 // Implementation for derivation Dani/demo-ads/ad-clicks-by-platform.
 export class Derivation extends IDerivation {

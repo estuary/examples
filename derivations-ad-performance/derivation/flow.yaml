@@ -1,6 +1,7 @@
 collections:
 
-  Dani/demo-ads/ad-clicks-by-platform:
+  # Modify this
+  dani-demo/demo-ad-performance/ad-clicks-by-platform:
 
     schema:
       description: A document that represents the click count for each ad platform
@@ -30,14 +31,16 @@ collections:
       transforms:
         - name: fromImpressions
           source:
-            name: Dani/demo-ads/ad_impressions
+            # Modify this
+            name: dani-demo/demo-ad-performance/ad_impressions
           shuffle:
             key:
               - /impression_id
 
         - name: fromClicks
           source:
-            name: Dani/demo-ads/ad_clicks
+            # Modify this
+            name: dani-demo/demo-ad-performance/ad_clicks
           shuffle:
             key:
               - /impression_id
