@@ -1,0 +1,43 @@
+collections:
+
+  Dani/demo-ads/ad-clicks-by-platform:
+
+    schema:
+      description: A document that represents the click count for each ad platform
+
+      type: object
+
+      properties:
+        platform:
+          type: string
+        click_count:
+          type: integer
+          reduce: { strategy: sum }
+
+      required:
+        - platform
+
+      reduce:
+        strategy: merge
+
+    key:
+      - /platform
+
+    derive:
+      using:
+        typescript:
+          module: ad-clicks-by-platform.flow.ts
+      transforms:
+        - name: fromImpressions
+          source:
+            name: Dani/demo-ads/ad_impressions
+          shuffle:
+            key:
+              - /impression_id
+
+        - name: fromClicks
+          source:
+            name: Dani/demo-ads/ad_clicks
+          shuffle:
+            key:
+              - /impression_id
