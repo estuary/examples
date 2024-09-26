@@ -26,7 +26,7 @@ collections:
         sqlite:
           migrations: []
       transforms:
-        - name: fromImpressions
+        - name: fromAlbums
           source:
             name: dani-demo/demo-music/albums
           shuffle:
@@ -35,11 +35,11 @@ collections:
           lambda: |
             select $artist_id, $total_plays;
 
-        - name: fromClicks
+        - name: fromArtists
           source:
             name: dani-demo/demo-music/artists
           shuffle:
             key:
               - /artist_id
           lambda: |
-            select $artist_id, $name as artist_name, 0 as total_plays;
+            select $artist_id, $name as artist_name;
