@@ -11,13 +11,14 @@ collections:
           type: integer
         artist_name:
           type: string
+          default: ""
           reduce: { strategy: maximize }
         total_plays:
           type: integer
+          default: 0
           reduce: { strategy: sum }
 
       required:
-        - artist_name
         - artist_id
 
       reduce:
@@ -38,7 +39,7 @@ collections:
             key:
               - /artist_id
           lambda: |
-            select $artist_id, "" as artist_name, $total_plays;
+            select $artist_id, $total_plays;
 
         - name: fromArtists
           source:
@@ -47,4 +48,4 @@ collections:
             key:
               - /artist_id
           lambda: |
-            select $artist_id, $name as artist_name, 0 as total_plays;
+            select $artist_id, $name as artist_name;
