@@ -1,0 +1,45 @@
+collections:
+  dani-demo/demo-music/artist_total_plays:
+
+    schema:
+      description: A document that represents the click count for each ad platform
+
+      type: object
+
+      properties:
+        artist_id:
+          type: integer
+        artist_name:
+          type: string
+        total_plays:
+          type: integer
+          reduce: { strategy: sum }
+
+      reduce:
+        strategy: merge
+
+    key:
+      - /artist_name
+
+    derive:
+      using:
+        sqlite:
+          migrations: []
+      transforms:
+        - name: fromImpressions
+          source:
+            name: dani-demo/demo-music/albums
+          shuffle:
+            key:
+              - /artist_id
+          lambda: |
+            select $artist_id, $total_plays;
+
+        - name: fromClicks
+          source:
+            name: dani-demo/demo-music/artists
+          shuffle:
+            key:
+              - /artist_id
+          lambda: |
+            select $artist_id, $name as artist_name, 0 as total_plays;

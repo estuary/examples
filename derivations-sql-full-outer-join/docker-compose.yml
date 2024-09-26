@@ -1,0 +1,55 @@
+services:
+  datagen:
+    build: datagen
+    container_name: datagen-derivations-sql-full-outer-join
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres-derivations-sql-full-outer-join
+    hostname: postgres
+    restart: unless-stopped
+    user: postgres
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U postgres -d postgres'"]
+      interval: 5s
+      timeout: 10s
+      retries: 120
+
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    ports:
+      - "5432:5432"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-derivations-sql-full-outer-join
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'tcp postgres:5432'
+    ports:
+      - "4040:4040"
