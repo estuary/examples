@@ -1,0 +1,1 @@
+# Measure WAL throughout in PostgreSQL
