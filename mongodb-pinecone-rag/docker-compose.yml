@@ -1,0 +1,25 @@
+services:
+  datagen:
+    build: datagen
+    container_name: mongodb-datagen
+    restart: unless-stopped
+
+    environment:
+      MONGODB_HOST: "localhost"
+      MONGODB_PORT: "27017"
+      MONGODB_USER: "mongo"
+      MONGODB_PASSWORD: "mongo"
+      MONGODB_DB: "ecommerce"
+      MONGODB_COLLECTION: "reviews"
+
+  streamlit:
+    build: .
+    container_name: streamlit
+
+    ports:
+      - 8501:8501
+
+    environment:
+      PINECONE_API_KEY: "<pinecone-api-key>" # edit
+      PINECONE_HOST: "<pinecone-host>"  # edit
+      OPENAI_API_KEY: "<openai-api-key>" # edit
