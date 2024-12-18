@@ -7,4 +7,4 @@
 3. Set up MongoDB Capture in Estuary Flow
 4. Start consuming with Dekaf.
 
-Full how-to guide: 
+Full how-to guide: https://bytewax.io/blog/estuary-flow-mongodb-bytewax-real-time-data
