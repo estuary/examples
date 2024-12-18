@@ -8,3 +8,5 @@
 4. Deploy derivation via `flowctl`
 5. ???
 5. Profit!
+
+Read the full article here: https://estuary.dev/derivations-join-collections-sql/

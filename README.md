@@ -1,5 +1,5 @@
 # Estuary Flow Examples
 
-This repository is a collection of example projects utilizing Estuary Flow.
+This repository is a collection of example projects utilizing Estuary Flow. See subdirectories for specific projects and instructions.
 
-Check out the full tutorial here:
+For more, check out the Estuary [blog](https://estuary.dev/blog/) and [documentation](https://docs.estuary.dev/).

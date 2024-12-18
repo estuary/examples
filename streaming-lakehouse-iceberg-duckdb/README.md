@@ -7,3 +7,5 @@
 3. Set up Estuary Flow capture
 4. ???
 5. Profit!
+
+Read the blog post at: https://estuary.dev/building-streaming-lakehouse-flow-iceberg/

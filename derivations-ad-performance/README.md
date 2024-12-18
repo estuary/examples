@@ -7,3 +7,5 @@
 3. Set up Estuary Flow capture
 4. ???
 5. Profit!
+
+Watch the demo here: https://youtu.be/dbHgn-AdVzU
