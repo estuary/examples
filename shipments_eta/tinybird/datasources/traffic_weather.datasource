@@ -1,0 +1,30 @@
+
+SCHEMA >
+    `_id` String `json:$._id`,
+    `_meta_before_json` String `json:$._meta.before.json`,
+    `_meta_op` String `json:$._meta.op`,
+    `_meta_source_collection` String `json:$._meta.source.collection`,
+    `_meta_source_db` String `json:$._meta.source.db`,
+    `_meta_source_snapshot` Nullable(UInt8) `json:$._meta.source.snapshot`,
+    `_meta_uuid` String `json:$._meta.uuid`,
+    `impact_on_ETA_minutes` Int16 `json:$.impact_on_ETA_minutes`,
+    `route_id` String `json:$.route_id`,
+    `timestamp` DateTime64(3) `json:$.timestamp`,
+    `traffic_condition` String `json:$.traffic_condition`,
+    `weather_condition` String `json:$.weather_condition`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(__timestamp)"
+ENGINE_SORTING_KEY "__timestamp"
+
+KAFKA_CONNECTION_NAME 'Estuary Flow'
+KAFKA_TOPIC 'Dani/shipments-demo/shipping/traffic_weather'
+KAFKA_GROUP_ID 'Dani/shipments-demo/shipping/traffic_weather_1738159640526'
+KAFKA_AUTO_OFFSET_RESET 'earliest'
+KAFKA_STORE_RAW_VALUE 'False'
+KAFKA_STORE_HEADERS 'False'
+KAFKA_STORE_BINARY_HEADERS 'True'
+KAFKA_TARGET_PARTITIONS 'auto'
+KAFKA_KEY_FORMAT ''
+KAFKA_VALUE_FORMAT ''
+KAFKA_KEY_AVRO_DESERIALIZATION ''
