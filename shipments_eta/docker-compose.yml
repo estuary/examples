@@ -1,0 +1,11 @@
+services:
+  datagen:
+    build: datagen
+    container_name: mongodb-shipping-datagen
+    restart: unless-stopped
+
+    environment:
+      MONGODB_HOST: "localhost"
+      MONGODB_PORT: "27017"
+      MONGODB_USER: "mongo"
+      MONGODB_PASSWORD: "mongo"

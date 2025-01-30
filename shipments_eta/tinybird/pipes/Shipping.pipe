@@ -1,0 +1,154 @@
+NODE latest_shipments
+SQL >
+
+    WITH latest_shipments AS (
+        SELECT 
+            shipment_id,
+            customer_id,
+            destination,
+            origin,
+            route_id,
+            status,
+            expected_delivery_date,
+            current_location_latitude,
+            current_location_longitude,
+            delays__duration_minutes,
+            delays__reason,
+            delays__timestamp,
+            events__checkpoint,
+            events__timestamp,
+            _meta_op,
+            _meta_before_json,
+            __timestamp,
+            ROW_NUMBER() OVER (PARTITION BY shipment_id ORDER BY __timestamp DESC) AS rn
+        FROM shipments
+    )
+    SELECT 
+        shipment_id,
+        customer_id,
+        destination,
+        origin,
+        route_id,
+        status,
+        expected_delivery_date,
+        current_location_latitude,
+        current_location_longitude,
+        delays__duration_minutes,
+        delays__reason,
+        delays__timestamp,
+        events__checkpoint,
+        events__timestamp
+    FROM latest_shipments
+    WHERE rn = 1
+
+
+
+NODE latest_traffic_weather
+SQL >
+
+    WITH ranked_traffic AS (
+        SELECT 
+            route_id,
+            traffic_condition,
+            weather_condition,
+            impact_on_ETA_minutes,
+            timestamp,
+            ROW_NUMBER() OVER (PARTITION BY route_id ORDER BY timestamp DESC) AS rn
+        FROM traffic_weather
+    )
+    SELECT * 
+    FROM ranked_traffic
+    WHERE rn = 1
+
+
+
+NODE delays
+SQL >
+
+    WITH shipment_delays AS (
+        SELECT 
+            s.shipment_id,
+            s.origin,
+            s.destination,
+            s.route_id,
+            s.current_location_latitude,
+            s.current_location_longitude,
+            s.expected_delivery_date AS original_eta,
+            s.expected_delivery_date + INTERVAL latest_t.impact_on_ETA_minutes MINUTE AS updated_eta,
+            arrayJoin(s.delays__reason) AS delay_reason,
+            arrayJoin(s.delays__duration_minutes) AS delay_value
+        FROM 
+            latest_shipments AS s
+        INNER JOIN 
+            latest_traffic_weather AS latest_t
+        ON 
+            s.route_id = latest_t.route_id
+    )
+    SELECT 
+        shipment_id,
+        any(origin) AS origin,
+        any(destination) AS destination,
+        any(route_id) AS route_id,
+        any(current_location_latitude) AS current_location_latitude,
+        any(current_location_longitude) AS current_location_longitude,
+        any(original_eta) AS original_eta,
+        any(updated_eta) AS updated_eta,
+        groupArrayDistinct(delay_reason) AS unique_delay_reasons,
+        SUM(delay_value) AS total_delay_minutes,
+        AVG(delay_value) AS avg_delay_minutes
+    FROM shipment_delays
+    GROUP BY shipment_id
+    ORDER BY total_delay_minutes DESC
+
+
+
+NODE route_performance
+DESCRIPTION >
+    Route congestion insights
+
+SQL >
+
+    SELECT 
+        concat(origin, ' - ', destination) as route,
+        COUNT(*) AS total_shipments,
+        SUM(total_delay_minutes) AS sum_delay_minutes,
+        AVG(total_delay_minutes) AS avg_delay_minutes,
+        MAX(total_delay_minutes) AS max_delay_minutes
+    FROM
+    delays
+    GROUP BY 
+        route
+    ORDER BY 
+        sum_delay_minutes DESC
+
+
+
+NODE shipment_status_distribution
+SQL >
+
+    SELECT 
+        concat(origin, ' - ', destination) as route,
+        s.status,
+        COUNT(*) AS status_count
+    FROM 
+        shipments AS s
+    GROUP BY 
+        route, s.status
+    ORDER BY 
+        route, status_count DESC
+
+
+
+NODE top_delayed_customers
+SQL >
+
+    SELECT 
+        s.customer_id,
+        COUNT(*) AS total_shipments,
+        SUM(arrayJoin(s.delays__duration_minutes)) AS total_delay_minutes,
+        AVG(arrayJoin(s.delays__duration_minutes)) AS avg_delay_minutes
+    FROM shipments AS s
+    GROUP BY s.customer_id
+    ORDER BY total_delay_minutes DESC
+
+

@@ -1,0 +1,39 @@
+
+SCHEMA >
+    `_id` String `json:$._id`,
+    `_meta_before_json` String `json:$._meta.before.json`,
+    `_meta_op` String `json:$._meta.op`,
+    `_meta_source_collection` String `json:$._meta.source.collection`,
+    `_meta_source_db` String `json:$._meta.source.db`,
+    `_meta_source_snapshot` Nullable(UInt8) `json:$._meta.source.snapshot`,
+    `_meta_uuid` String `json:$._meta.uuid`,
+    `customer_id` String `json:$.customer_id`,
+    `delays__duration_minutes` Array(Int16) `json:$.delays[:].duration_minutes`,
+    `delays__reason` Array(String) `json:$.delays[:].reason`,
+    `delays__timestamp` Array(DateTime64(3)) `json:$.delays[:].timestamp`,
+    `destination` String `json:$.destination`,
+    `events__checkpoint` Array(String) `json:$.events[:].checkpoint`,
+    `events__timestamp` Array(DateTime64(3)) `json:$.events[:].timestamp`,
+    `expected_delivery_date` DateTime64(3) `json:$.expected_delivery_date`,
+    `origin` String `json:$.origin`,
+    `route_id` String `json:$.route_id`,
+    `shipment_id` String `json:$.shipment_id`,
+    `status` String `json:$.status`,
+    `current_location_latitude` Nullable(Float32) `json:$.current_location.latitude`,
+    `current_location_longitude` Nullable(Float32) `json:$.current_location.longitude`
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(__timestamp)"
+ENGINE_SORTING_KEY "__timestamp"
+
+KAFKA_CONNECTION_NAME 'Estuary Flow'
+KAFKA_TOPIC 'Dani/shipments-demo/shipping/shipments'
+KAFKA_GROUP_ID 'Dani/shipments-demo/shipping/shipments_1738159738492'
+KAFKA_AUTO_OFFSET_RESET 'earliest'
+KAFKA_STORE_RAW_VALUE 'False'
+KAFKA_STORE_HEADERS 'False'
+KAFKA_STORE_BINARY_HEADERS 'True'
+KAFKA_TARGET_PARTITIONS 'auto'
+KAFKA_KEY_FORMAT ''
+KAFKA_VALUE_FORMAT ''
+KAFKA_KEY_AVRO_DESERIALIZATION ''

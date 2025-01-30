@@ -1,0 +1,11 @@
+{
+    "host": "https://api.us-east.tinybird.co",
+    "id": "4ef1ab06-e135-4ec7-a81f-2842ce5d3b86",
+    "name": "dani_test",
+    "scope": null,
+    "token": "p.eyJ1IjogIjRlZjFhYjA2LWUxMzUtNGVjNy1hODFmLTI4NDJjZTVkM2I4NiIsICJpZCI6ICI0YWNiOTc0Yy1jYjJjLTQzZTQtOTdlMC0xNzhmMGU5MjU5NzMiLCAiaG9zdCI6ICJ1c19lYXN0In0.lierQy2TfhPvRRfscJjueR3nO1gZcrUvhjqYrZ5UVWg",
+    "tokens": {
+        "https://api.us-east.tinybird.co": "p.eyJ1IjogIjRlZjFhYjA2LWUxMzUtNGVjNy1hODFmLTI4NDJjZTVkM2I4NiIsICJpZCI6ICI0YWNiOTc0Yy1jYjJjLTQzZTQtOTdlMC0xNzhmMGU5MjU5NzMiLCAiaG9zdCI6ICJ1c19lYXN0In0.lierQy2TfhPvRRfscJjueR3nO1gZcrUvhjqYrZ5UVWg"
+    },
+    "version": "5.14.0"
+}
