@@ -6,12 +6,13 @@ GRANT pg_read_all_data TO postgres;
 CREATE TABLE IF NOT EXISTS public.flow_watermarks (
     slot TEXT PRIMARY KEY,
     watermark TEXT
-),
+);
+
 GRANT ALL PRIVILEGES ON TABLE public.flow_watermarks TO postgres;
 
 -- Create a publication for logical replication
 CREATE PUBLICATION flow_publication;
-ALTER PUBLICATION flow_publication SET (publish_via_partition_root = true),
+ALTER PUBLICATION flow_publication SET (publish_via_partition_root = true);
 ALTER PUBLICATION flow_publication ADD TABLE public.flow_watermarks;
 
 -- Products table (Static list of 30 pet store products)
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS products (
     category VARCHAR,
     price NUMERIC,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-),
+);
 
 -- Transactions table
 CREATE TABLE IF NOT EXISTS transactions (
@@ -31,7 +32,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     amount NUMERIC,
     payment_method TEXT
-),
+);
 
 -- Reviews table
 CREATE TABLE IF NOT EXISTS reviews (
@@ -41,7 +42,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     rating INT,
     review_text TEXT,
     review_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-),
+);
 
 -- Add the new tables to the publication
 ALTER PUBLICATION flow_publication ADD TABLE public.transactions, public.products, public.reviews;
