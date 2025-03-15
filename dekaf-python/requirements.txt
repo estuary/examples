@@ -1,2 +1,1 @@
-kafka-python-ng
-fastavro
+confluent-kafka[avro,schemaregistry,rules]
