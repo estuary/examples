@@ -58,7 +58,8 @@ def consume():
             data = deserializer(msg.value(), SerializationContext(msg.topic(), MessageField.VALUE))
 
             if data:
-                print(f"Consumed record: {data}")
+                # print(f"Consumed record: {data}")
+                print(f"{data['id'], data['meta']['domain'], data['timestamp'], data['title']}")
 
     except KeyboardInterrupt:
         print("Consumption interrupted.")
