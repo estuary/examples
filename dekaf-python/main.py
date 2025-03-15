@@ -2,79 +2,70 @@ import os
 from confluent_kafka import Consumer
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroDeserializer
+from confluent_kafka.serialization import SerializationContext, MessageField
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Configuration
-topic = "dani-demo/postgresdemo/sales"
-username = "{}"
+dekaf_url = "dekaf.estuary-data.com"
+schema_registry_url = "https://dekaf.estuary-data.com"
+topic = "recentchange-sampled" # collection name
+
+username = os.getenv("DEKAF_TASK_NAME")
 password = os.getenv("DEKAF_ACCESS_TOKEN")
 
-
-def get_avro_schema(schema_registry_client, subject):
-    # Get the latest version of the schema for the subject
-    latest_schema = schema_registry_client.get_latest_version(subject)
-    return latest_schema.schema.schema_str
-
-
-def process_record(record: bytes, deserializer: AvroDeserializer):
-    # Deserialize the record using the Avro deserializer
-    return deserializer(record, None)
-
-
-# Create SchemaRegistryClient instance
-schema_registry_client = SchemaRegistryClient(
-    {
-        "url": "https://dekaf.estuary.dev",
-        "basic.auth.user.info": f"{username}:{password}",
-    }
-)
-
-# Define the subject name based on your topic and schema naming convention & get Avro schema
-schema_str = get_avro_schema(schema_registry_client, f"{topic}-value")
-
-# Create Avro Deserializer instance
-deserializer = AvroDeserializer(
-    schema_str=schema_str, schema_registry_client=schema_registry_client
-)
-
-# Create Consumer instance
-consumer = Consumer(
-    {
-        "bootstrap.servers": "dekaf.estuary.dev:9092",
+def kafka_config():
+    return {
+        "bootstrap.servers": dekaf_url,
         "security.protocol": "SASL_SSL",
         "sasl.mechanism": "PLAIN",
         "sasl.username": username,
         "sasl.password": password,
-        "auto.offset.reset": "earliest",
-        "group.id": "demo123",
+        "group.id": "my-group",
+        "auto.offset.reset": "latest",
     }
-)
 
-# Subscribe to the topic
-consumer.subscribe([topic])
+schema_registry_conf = {
+    "url": schema_registry_url,
+    "basic.auth.user.info": f"{username}:{password}"
+}
 
-# Poll for messages
-try:
-    while True:
-        msg = consumer.poll(timeout=1.0)
-        if msg is None:
-            continue
-        if msg.error():
-            print(f"Consumer error: {msg.error()}")
-            continue
+schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
-        # Process the record
-        key = msg.key()
-        value = msg.value()
+# Define a function to deserialize Avro-encoded messages
+def avro_deserializer(schema_registry_client, topic):
+    latest_schema = schema_registry_client.get_latest_version(f"{topic}-value").schema
+    return AvroDeserializer(schema_registry_client, latest_schema)
 
-        if value:
-            # Process the value using the deserializer
-            processed_value = process_record(value, deserializer)
-            print(f"Received value: {processed_value}")
+def consume():
+    consumer = Consumer(kafka_config())
+    consumer.subscribe([topic])
 
-except KeyboardInterrupt:
-    print("Interrupted by user")
-finally:
-    consumer.close()
+    deserializer = avro_deserializer(schema_registry_client, topic)
+
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+
+            if msg is None:
+                continue
+            if msg.error():
+                print(f"Consumer error: {msg.error()}")
+                continue
+
+            data = deserializer(msg.value(), SerializationContext(msg.topic(), MessageField.VALUE))
+
+            if data:
+                # print(f"Consumed record: {data}")
+                print(f"{data['id'], data['meta']['domain'], data['timestamp'], data['title']}")
+
+    except KeyboardInterrupt:
+        print("Consumption interrupted.")
+    finally:
+        consumer.close()
+
+
+if __name__ == "__main__":
+    consume()
