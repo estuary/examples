@@ -22,11 +22,11 @@ DB_PORT = os.getenv("POSTGRES_PORT", "5432")
 # GCP Cloud SQL parameters
 USE_CLOUD_SQL = os.getenv("USE_CLOUD_SQL", "false").lower() == "true"
 CLOUD_SQL_CONNECTION_NAME = os.getenv(
-    "CLOUD_SQL_CONNECTION_NAME", "estuary-theatre:us-central1:dani-demo"
+    "CLOUD_SQL_CONNECTION_NAME"
 )
-CLOUD_SQL_USER = os.getenv("CLOUD_SQL_USER", "postgres")
-CLOUD_SQL_PASSWORD = os.getenv("CLOUD_SQL_PASSWORD", "dani-demo-pw")
-CLOUD_SQL_DB = os.getenv("CLOUD_SQL_DB", "postgres")
+CLOUD_SQL_USER = os.getenv("CLOUD_SQL_USER")
+CLOUD_SQL_PASSWORD = os.getenv("CLOUD_SQL_PASSWORD")
+CLOUD_SQL_DB = os.getenv("CLOUD_SQL_DB")
 
 # OpenAI API key (set your key as an environment variable)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
