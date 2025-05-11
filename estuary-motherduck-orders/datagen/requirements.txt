@@ -1,0 +1,6 @@
+psycopg2-binary==2.9.9
+openai==1.12.0
+Faker==22.6.0
+cloud-sql-python-connector[pg8000]==1.7.0
+SQLAlchemy==2.0.27
+pg8000==1.30.5
