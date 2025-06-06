@@ -1,0 +1,19 @@
+services:
+  oracle-db:
+    image: oracle/database:23.6.0-free
+    ports: 
+      - "1521:1521"
+    volumes:
+      - ./config:/opt/oracle/scripts/setup
+      - ./data:/opt/oracle/oradata
+    environment:
+      ORACLE_PWD: YOUR-PW
+      ENABLE_ARCHIVELOG: true
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    environment:
+      NGROK_AUTHTOKEN: YOUR-TOKEN
+    command: 'tcp oracle-db:1521'
+    ports:
+      - 4040:4040
