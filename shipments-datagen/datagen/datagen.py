@@ -125,7 +125,7 @@ def update_shipments(conn):
         elif status == 'Delayed':
             # once you hit a delay, it's harder to get out of it
             new_status = random.choices(['Delayed', 'In Transit'], 
-                                        weights=[0.8, 0.2], k=1)[0]
+                                        weights=[0.7, 0.3], k=1)[0]
             
             if not is_on_time(current_location, delivery_coordinates, delivery_date):
                 new_delivery_date = delivery_date + timedelta(days=1)
@@ -160,7 +160,7 @@ def delete_old_shipments(conn):
     print('Deleting old shipments')
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id FROM shipments WHERE updated_at <= now() - interval '30 days';")
+        "SELECT id FROM shipments WHERE created_at <= now() - interval '30 days';")
     old_shipments = cursor.fetchall()
     print(old_shipments)
 
@@ -174,7 +174,7 @@ def delete_old_shipments(conn):
 # main loop producing change events for CDC to capture
 def change_loop(conn):
     while True:
-        action = random.choices(['c', 'u', 'd'], weights=[0.5, 0.499, 0.001], k=1)[0]
+        action = random.choices(['c', 'u', 'd'], weights=[0.6, 0.2, 0.2], k=1)[0]
 
         if action == 'c':
             insert_shipment(conn)

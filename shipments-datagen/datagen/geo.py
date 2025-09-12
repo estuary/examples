@@ -65,7 +65,20 @@ def update_location(current_location, delivery_coordinates):
         bearing = random.randint(270, 359)
 
     new_location = distance.distance(miles=miles_traveled).destination(current_location, bearing=bearing)
-    return (new_location.latitude, new_location.longitude)
+    new_lat = new_location.latitude
+    new_long = new_location.longitude
+
+    # add boundaries so shipment doesn't get too far away
+    if new_lat < 20:
+        new_lat = 20
+    elif new_lat > 72:
+        new_lat = 72
+    if new_long < -170:
+        new_long = -170
+    elif new_long > -64:
+        new_long = -64
+    
+    return (new_lat, new_long)
 
 
 def is_in_delivery_distance(current_location, delivery_coordinates):
