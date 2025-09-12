@@ -3,6 +3,8 @@
 
 This project provides a demo Oracle instance in a Docker container to test capturing Oracle data with Estuary.
 
+See the video at: https://www.youtube.com/watch?v=mE7LFSqfwY8
+
 ## Prerequisites
 
 To run this project, you will need to have:
