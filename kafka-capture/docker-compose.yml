@@ -1,0 +1,10 @@
+services:
+  datagen:
+    build:
+      context: ./datagen
+    container_name: msk_datagen
+    env_file:
+      - .env
+    network_mode: "host"  # Use host network to access MSK from container
+    restart: unless-stopped
+    command: ["python", "-u", "datagen.py"]
