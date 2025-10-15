@@ -110,9 +110,7 @@ Step 3. Set Up Estuary Capture
 - Schema evolution: by default enabled with the options:
   
          - Automatically keep schemas up to date
-  
          - Automatically add new collections, and
-  
          - Changing primary keys re-versions collections.
   
 - Bindings: This will capture the tables from source. Here you can be selective if there are more tables to pick from. 
