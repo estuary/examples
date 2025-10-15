@@ -108,11 +108,9 @@ Step 3. Set Up Estuary Capture
 
 5.	On the following screen, a few points to note:
 - Schema evolution: by default enabled with the options:
-  
          - Automatically keep schemas up to date
          - Automatically add new collections, and
          - Changing primary keys re-versions collections.
-  
 - Bindings: This will capture the tables from source. Here you can be selective if there are more tables to pick from. 
 - Backfill: First time you initiate a capture task, Estuary will perform an initial load of existing data within the tables and once completed will stream changes using CDC (if the real-time connector was selected). 
 
