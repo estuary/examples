@@ -32,7 +32,7 @@ Once you have created your Ngrok free account, you will need to obtain your ‘A
 <br>
 <br>
 
-PostgreSQL Setup
+**PostgreSQL Setup**
 
 If you do not have PostgreSQL already running, we will set this up using a Docker image. Save the below yaml script as docker-compose.yaml.   This file will contain the service definitions for the PostgreSQL database, the mock data generator and Ngrok tunnel service (if you prefer, you can download the files from our GitHub repository here).
 
@@ -93,6 +93,9 @@ The rows of data of your Estuary data pipe-lines are stored in collections: real
 **Destinations:**
 A materialization is how Estuary pushes data to an endpoint, binding one or more collections.  As rows of data are added to the bound collections, the materialization continuously pushes it to the destination, where it is reflected with very low latency.
 
+<br>
+<br>
+
 ### Lab Exercise 1: End-to-End Data Pipeline
 Step 3. Set Up Estuary Capture
 
@@ -107,49 +110,55 @@ Step 3. Set Up Estuary Capture
 *NOTE: To obtain server address info, login to your Ngrok account and select Endpoints and Traffic Policy from the left-hand menu. This will provide the address to use. Remember to remove tcp:// when pasting the address into Estuary’s UI.*
 
 5.	On the following screen, a few points to note:
-- Schema evolution: by default enabled with the options:
-         - Automatically keep schemas up to date
-         - Automatically add new collections, and
+- Schema evolution: by default enabled with the options:<br>
+         - Automatically keep schemas up to date<br>
+         - Automatically add new collections, and<br>
          - Changing primary keys re-versions collections.
 - Bindings: This will capture the tables from source. Here you can be selective if there are more tables to pick from. 
 - Backfill: First time you initiate a capture task, Estuary will perform an initial load of existing data within the tables and once completed will stream changes using CDC (if the real-time connector was selected). 
 
-NOTE: If you do not want to perform an initial load of existing data, you can change the backfill option using Backfill Mode. 
+*NOTE: If you do not want to perform an initial load of existing data, you can change the backfill option using Backfill Mode.* 
 
 Leave everything as default settings and select NEXT again, then SAVE AND PUBLISH to deploy the connector and kick off a backfill.
 
-NOTE: You’ll get a warning message about a watermark table not be created. You can ignore this as Estuary will create this for us. 
+*NOTE: You’ll get a warning message about a watermark table not be created. You can ignore this as Estuary will create this for us.* 
 
 6.	Once your capture is set up, you’ll be able to get some insights within the Capture Details page.
 
-NOTE: Notice the additional tabs across the top for specific information about the capture task e.g. History (audit log) and Logs (troubleshoot for errors).
+*NOTE: Notice the additional tabs across the top for specific information about the capture task e.g. History (audit log) and Logs (troubleshoot for errors).*
+
 7.	Go back to the Sources main page to see the capture running.
 
-
+<br>
+<br>
 Step 4. View Associating Collection for Table Captured
 
-8.	From the left-hand side, click on Collections
-
-NOTE: Notice that the metrics presented here should match the metrics from the associating capture (I’ve temporarily stopped the data generator to get a consistent count across all my Estuary tasks).
-
+<br>8.	From the left-hand side, click on Collections<br>
+<br>
+*NOTE: Notice that the metrics presented here should match the metrics from the associating capture (I’ve temporarily stopped the data generator to get a consistent count across all my Estuary tasks).*
+<br>
+<br>
 9.	You can drill into each collection to view more detailed information 
 
-NOTE: Notice that the ‘Read By’ states N/A. This will change when we set up the materialization task when we assign this collection task to it.
+*NOTE: Notice that the ‘Read By’ states N/A. This will change when we set up the materialization task when we assign this collection task to it.*
+<br>
+<br>
+<br>Step 5. Set Up Target Environment
 
-Step 5. Set Up Target Environment
-S3 bucket and Access key ID and Secret Access Key
+**S3 bucket and Access key ID and Secret Access Key** <br>
 You can use an existing user, or create a new user for the S3 bucket and for best performance use region us-east-1. Ensure you have assigned read/write permissions (i.e. AmazonS3FullAccess) and create security credentials (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY). You can create a new user from the IAM console.
 
-Create an Access Token within MotherDuck
+**Create an Access Token within MotherDuck** <br>
 You can create an access token from the Settings menu. Under Integrations you’ll find Access Token. Click on + Create token, provide a name and proceed to create token. Make a note of the token access string, which will be required within Estuary during the connection details. 
 
-Adding Secrets to MotherDuck to Access S3
+**Adding Secrets to MotherDuck to Access S3** <br>
 You’ll need to provide MotherDuck access to your S3 bucket. Again, you can find this within Settings > Integrations > Secrets. Click on + Add secrets and complete Name, Secret Type (Amazon S3), Access Key ID, Secret Access Key and Region (us-east-1). 
 
-Create a New Database
+**Create a New Database** <br>
 Create a new database in MotherDuck for this lab exercise called lab1.
 
-
+<br>
+<br>
 Step 6. Set Up Estuary Materialization
 
 10.	Go to the destination page by clicking on the Destinations on the left-hand side of your screen, then click on + New Materialization.
@@ -160,7 +169,7 @@ Step 6. Set Up Estuary Materialization
 
 13.	Complete the necessary connection details to login to MotherDuck and enter lab1 for Bucket Path. Click on NEXT when done.
 
-NOTE: Notice below the credential section, you have the ability to define a sync schedule for applying to the target based on time, timezone, start and end times and which days to perform sync. This is useful with data warehouses like MotherDuck to perform micro-batch applies. For this exercise, we will leave as default. 
+*NOTE: Notice below the credential section, you have the ability to define a sync schedule for applying to the target based on time, timezone, start and end times and which days to perform sync. This is useful with data warehouses like MotherDuck to perform micro-batch applies. For this exercise, we will leave as default.* 
 
 14.	For Target Resource Naming Convention click on the drop-down and select Use Table Name Only as we want to use the main schema and not mirror the source public schema. 
 
@@ -169,28 +178,36 @@ NOTE: Notice below the credential section, you have the ability to define a sync
 
 16.	Select NEXT again, then SAVE AND PUBLISH to deploy the connector and apply data into MotherDuck. Once your materialization is set up, you’ll be able to get some insights within the Materialization Details page.
 
-NOTE: Notice that the metric here matches my capture and collections (I’ve temporarily stopped the data generator to get a consistent count across all my Estuary tasks).
+*NOTE: Notice that the metric here matches my capture and collections (I’ve temporarily stopped the data generator to get a consistent count across all my Estuary tasks).*
 
 17.	Go back to the Destination main page to see the materialization running.
 
+<br>
+<br>
 
 Step 7. View In MotherDuck
 
 18.	Let’s go back into MotherDuck’s dashboard and verify that data has been replicated, as shown below (I’ve temporarily stopped the data generator to get a consistent count across all my Estuary tasks):
 
+<br>
+<br>
 Step 8. Some Observations About Your Newly Created Data Pipeline
 
-Capture Side:
-•	By default, Estuary will coalesce the data to only transmit the current state of the source data-point e.g. If there are 4 updates to an existing row with the same primary key, Estuary will only capture the latest update, as this mirror’s the current state, and ignores the previous 3 updates. 
-•	History Mode enabled will allow you to capture all the transactions without reducing them to a final state (which we have enabled for our lab exercise). 
 
-Materialization Side:
-•	By default, Estuary will perform soft deletes downstream. When a delete operation is detected, Estuary will add an extra column on the target table indicating that the record is marked for deletion with another metadata column indicating the operation type. The record will not be physically deleted in the target. 
-•	Hard Delete enabled will perform the physical deletes in the destination (we’ll look into this for lab exercise 2).
-•	Delta Update (in combination with History Mode) ensures all changes are inserted as new rows in the destination, rather than overwriting existing records (we’ll look into this for lab exercise 3).
+Capture Side: <br>
+•	By default, Estuary will coalesce the data to only transmit the current state of the source data-point e.g. If there are 4 updates to an existing row with the same primary key, Estuary will only capture the latest update, as this mirror’s the current state, and ignores the previous 3 updates. <br>
+•	History Mode enabled will allow you to capture all the transactions without reducing them to a final state (which we have enabled for our lab exercise). <br>
+
+Materialization Side: <br>
+•	By default, Estuary will perform soft deletes downstream. When a delete operation is detected, Estuary will add an extra column on the target table indicating that the record is marked for deletion with another metadata column indicating the operation type. The record will not be physically deleted in the target. <br>
+•	Hard Delete enabled will perform the physical deletes in the destination (we’ll look into this for lab exercise 2). <br>
+•	Delta Update (in combination with History Mode) ensures all changes are inserted as new rows in the destination, rather than overwriting existing records (we’ll look into this for lab exercise 3). <br>
+
 Change operation type: 'c' Create/Insert, 'u' Update, 'd' Delete.
 
 
+<br>
+<br>
 
 ### Lab Exercise 2: One-to-Many Topology
 Step 9. Create a 2nd Materialization, Reading from the Same Collection
@@ -214,6 +231,10 @@ Step 9. Create a 2nd Materialization, Reading from the Same Collection
 
 27.	Select NEXT again, then SAVE AND PUBLISH to deploy the connector and apply data into MotherDuck. Once your materialization is set up, go back into MotherDuck’s dashboard and verify that data has been replicated.
 
+
+<br>
+<br>
+<br>
  
 
 ### Lab Exercise 3: Slowly Changing Dimension Type 2
