@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_cdc
+    hostname: postgres_cdc
+    restart: unless-stopped
+    user: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U postgres -d postgres'"]
+      interval: 5s
+      timeout: 10s
+      retries: 120   
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql 
+    ports:
+      - "5432:5432"
+
+  datagen:
+    image: materialize/datagen
+    container_name: datagen
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres_cdc
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    entrypoint:
+      "datagen -s /app/schemas/products.sql -n 10000 -f postgres -w 1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    volumes:
+          - ./schemas/products.sql:/app/schemas/products.sql
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    environment:
+      NGROK_AUTHTOKEN: <enter ngrok token here>
+    command: 'tcp postgres:5432'
+    ports:
+      - 4040:4040
