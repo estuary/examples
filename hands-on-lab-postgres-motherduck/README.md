@@ -2,7 +2,7 @@
 
 ## Move Data from PostgreSQL to MotherDuck
 
-**Introduction**
+#### Introduction
 
 In this hands-on lab, we'll be setting up a streaming CDC pipeline from PostgreSQL to MotherDuck using Estuary.  You'll use Estuary's PostgreSQL capture (source) connector and MotherDuck materialization (target) connector to set up an end-to-end CDC pipeline in three steps:
 1.	You’ll capture change event data from a PostgreSQL database, using a table filled with generated realistic product data.
@@ -15,7 +15,7 @@ By the end of this tutorial, you'll have established robust and efficient data p
 
 Before you get started, make sure to satisfy all prerequisites to complete this workshop. 
 
-**Prerequisites**
+#### Prerequisites
 
 This tutorial will assume you have access to the following resources for this hands-on lab:
 - Laptop and web browser: We’ll be running the workshop from your own equipment via web-based UI.
