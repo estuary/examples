@@ -1,8 +1,8 @@
-Estuary Hands on Lab (HoL) Workshop
+# Estuary Hands on Lab (HoL) Workshop
 
-Move Data from PostgreSQL to MotherDuck
+## Move Data from PostgreSQL to MotherDuck
 
-Introduction
+**Introduction**
 
 In this hands-on lab, we'll be setting up a streaming CDC pipeline from PostgreSQL to MotherDuck using Estuary.  You'll use Estuary's PostgreSQL capture (source) connector and MotherDuck materialization (target) connector to set up an end-to-end CDC pipeline in three steps:
 1.	You’ll capture change event data from a PostgreSQL database, using a table filled with generated realistic product data.
@@ -15,37 +15,43 @@ By the end of this tutorial, you'll have established robust and efficient data p
 
 Before you get started, make sure to satisfy all prerequisites to complete this workshop. 
 
-Prerequisites
+**Prerequisites**
+
 This tutorial will assume you have access to the following resources for this hands-on lab:
-•	Laptop and web browser: We’ll be running the workshop from your own equipment via web-based UI.
-•	Docker: for convenience, we are providing a docker compose definition which will allow you to spin up a database and a fake data generator service.
-•	Estuary account (free tier): We’ll be creating and managing our CDC pipeline from Estuary’s UI. 
-•	MotherDuck account (free tier): The target data warehouse for our data pipeline is MotherDuck.  In order to follow along with the hands-on lab, a trial account is perfectly fine. You’ll also need a service token, which can be obtained from the MotherDuck console. 
-•	AWS S3 Bucket: An S3 bucket for staging temporary files. An S3 bucket in us-east-1 is recommended for best performance and costs, since MotherDuck is currently hosted in that region. You’ll also need your access key id and secret access key. 
-•	A verified Ngrok account (free tier): Estuary is a fully managed service.  Because the database used in this hands-on lab will be running on your machine, you’ll need something to expose it to the internet. ngrok is a lightweight tool that does just that.
-
-
-Step 1. Set Up Source Environment
-Ngrok Authentication Token
-Once you have created your Ngrok free account, you will need to obtain your ‘Authentication Token’ for the next step.  Save this to paste into the docker-compose.yaml script later. 
+- Laptop and web browser: We’ll be running the workshop from your own equipment via web-based UI.
+- Docker: for convenience, we are providing a docker compose definition which will allow you to spin up a database and a fake data generator service.
+- Estuary account (free tier): We’ll be creating and managing our CDC pipeline from Estuary’s UI. 
+- MotherDuck account (free tier): The target data warehouse for our data pipeline is MotherDuck.  In order to follow along with the hands-on lab, a trial account is perfectly fine. You’ll also need a service token, which can be obtained from the MotherDuck console. 
+- AWS S3 Bucket: An S3 bucket for staging temporary files. An S3 bucket in us-east-1 is recommended for best performance and costs, since MotherDuck is currently hosted in that region. You’ll also need your access key id and secret access key. 
+- A verified Ngrok account (free tier): Estuary is a fully managed service.  Because the database used in this hands-on lab will be running on your machine, you’ll need something to expose it to the internet. ngrok is a lightweight tool that does just that.
+<br>
+<br>
+<br>
+Step 1. Set Up Source Environment Ngrok Authentication Token<br> 
+Once you have created your Ngrok free account, you will need to obtain your ‘Authentication Token’ for the next step.  Save this to paste into the docker-compose.yaml script later.
+<br>
+<br>
 
 PostgreSQL Setup
+
 If you do not have PostgreSQL already running, we will set this up using a Docker image. Save the below yaml script as docker-compose.yaml.   This file will contain the service definitions for the PostgreSQL database, the mock data generator and Ngrok tunnel service (if you prefer, you can download the files from our GitHub repository here).
 
 We will now create a init.sql script, which contains the products database table that will be used to ingest change data for streaming downstream.
 
 Create a new folder within the root folder called schemas and paste the below SQL DDL into a file called products.sql.   This file contains the schema of the demo data generator.
 	
-NOTE: This file defines the schema via a create table statement, but the actual table creation happens in the init.sql file, this is just a quirk of the Datagen data generator tool.
+*NOTE: This file defines the schema via a create table statement, but the actual table creation happens in the init.sql file, this is just a quirk of the Datagen data generator tool.*
 
 For the purpose of this hands-on lab, we will be using the postgres database user.  For production use, we recommend creating a dedicated Estuary database user and assign it the privileges and grants required, per our documentation. 
 
 We’re now ready to start the source database.  In order to initialize Postgres, the fake data generator and ngrok service, all you have to do is execute the following command from within the root folder of your hands-on lab:
 > docker compose up
 
-NOTE: If you run into the following error:
+*NOTE: If you run into the following error:
 ‘postgres_cdc | psql:/docker-entrypoint-initdb.d/init.sql:8: ERROR: syntax error at or near "COMMENT" postgres_cdc | LINE 3: "name" varchar COMMENT 'faker.internet.userName()',’
-Wait a few minutes and then try again, it should resolve itself. 
+Wait a few minutes and then try again, it should resolve itself.*
+<br>
+<br>
 After a few seconds, you should see the services are up and running. The postgres_cdc service should print the following on the terminal:
 
 postgres_cdc  | LOG:  database system is ready to accept connections
@@ -66,7 +72,8 @@ Enter the password postgres.
 Before we jump into setting up the replication, you can quickly verify the data is being properly generated by connecting to the database and peeking into the products table, as shown below:
 
 Wait a few seconds and enter the select count(*) from products; command again.  You should see a difference in values. 
-
+<br>
+<br>
 
 Step 2. Access Estuary Dashboard
 
@@ -78,16 +85,15 @@ On the left-hand menu bar, there are several options for interacting with Estuar
 -	Collections
 -	Destinations
 -	Admin
-Sources
-Every Estuary data pipe-line starts with a capture, which is configured from ‘Sources’.   Each table adds rows of data to a corresponding Estuary collection.
-Collections
+
+**Sources:**
+Every Estuary data pipe-line starts with a capture, which is configured from ‘Sources’.   Each table adds rows of data to a corresponding Estuary collection. 
+<br>**Collections:** 
 The rows of data of your Estuary data pipe-lines are stored in collections: real-time data lakes of JSON documents in cloud storage (AWS S3, Azure Blob Storage or Google Cloud Storage), which can be re-played if desired instead of going back to the source.  
-Destinations
+**Destinations:**
 A materialization is how Estuary pushes data to an endpoint, binding one or more collections.  As rows of data are added to the bound collections, the materialization continuously pushes it to the destination, where it is reflected with very low latency.
 
-                         
-
-Lab Exercise 1: End-to-End Data Pipeline
+### Lab Exercise 1: End-to-End Data Pipeline
 Step 3. Set Up Estuary Capture
 
 1.	Go to the sources page by clicking on the Sources on the left-hand side of your screen, then click on + New Capture.
@@ -98,13 +104,17 @@ Step 3. Set Up Estuary Capture
 
 4.	Complete the necessary connection details to login to PostgreSQL and click on History Mode as we’ll need this for later labs. Click on NEXT when done.
 
-NOTE: To obtain server address info, login to your Ngrok account and select Endpoints and Traffic Policy from the left-hand menu. This will provide the address to use. Remember to remove tcp:// when pasting the address into Estuary’s UI.
+*NOTE: To obtain server address info, login to your Ngrok account and select Endpoints and Traffic Policy from the left-hand menu. This will provide the address to use. Remember to remove tcp:// when pasting the address into Estuary’s UI.*
 
 5.	On the following screen, a few points to note:
-- Schema evolution: by default enabled with the options: 
-       - Automatically keep schemas up to date 
-       - Automatically add new collections, and 
-       - Changing primary keys re-versions collections. 
+- Schema evolution: by default enabled with the options:
+  
+         - Automatically keep schemas up to date
+  
+         - Automatically add new collections, and
+  
+         - Changing primary keys re-versions collections.
+  
 - Bindings: This will capture the tables from source. Here you can be selective if there are more tables to pick from. 
 - Backfill: First time you initiate a capture task, Estuary will perform an initial load of existing data within the tables and once completed will stream changes using CDC (if the real-time connector was selected). 
 
@@ -186,7 +196,7 @@ Change operation type: 'c' Create/Insert, 'u' Update, 'd' Delete.
 
 
 
-Lab Exercise 2: One-to-Many Topology
+### Lab Exercise 2: One-to-Many Topology
 Step 9. Create a 2nd Materialization, Reading from the Same Collection
 
 19.	In MotherDuck add a new database and call it lab2. 
@@ -210,7 +220,7 @@ Step 9. Create a 2nd Materialization, Reading from the Same Collection
 
  
 
-Lab Exercise 3: Slowly Changing Dimension Type 2
+### Lab Exercise 3: Slowly Changing Dimension Type 2
 Step 10. Create a 3rd Materialization to Insert All Records
 
 Prerequisite for this is to enable History Mode on capture side, which we already did in lab exercise 1. 
