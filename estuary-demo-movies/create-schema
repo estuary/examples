@@ -1,0 +1,21 @@
+CREATE TABLE movies (
+    prod_id INTEGER NOT NULL,
+    prod_price NUMERIC(10, 2) NOT NULL,
+    prod_descrip VARCHAR(100) NOT NULL
+);
+
+create unique index movies_x0
+on movies
+(prod_id)
+;
+
+insert into movies (prod_id, prod_price, prod_descrip) values (1, 29.99, 'X-Men: Apocalypse');
+insert into movies (prod_id, prod_price, prod_descrip) values (2, 39.99, 'Doctor Strange');
+insert into movies (prod_id, prod_price, prod_descrip) values (3, 29.99, 'Captain America: Civil War');
+insert into movies (prod_id, prod_price, prod_descrip) values (4, 39.99, 'The Amazing Spiderman');
+insert into movies (prod_id, prod_price, prod_descrip) values (5, 29.99, 'Avengers Assemble');
+insert into movies (prod_id, prod_price, prod_descrip) values (6, 39.99, 'Iron-Man 3');
+insert into movies (prod_id, prod_price, prod_descrip) values (7, 29.99, 'The Incredible Hulk');
+insert into movies (prod_id, prod_price, prod_descrip) values (8, 39.99, 'Thor');
+insert into movies (prod_id, prod_price, prod_descrip) values (9, 39.99, 'X-Men Origins: Wolverine');
+insert into movies (prod_id, prod_price, prod_descrip) values (10, 39.99, 'The Amazin Spiderman 2');
