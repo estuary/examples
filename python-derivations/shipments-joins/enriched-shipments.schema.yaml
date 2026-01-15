@@ -1,0 +1,34 @@
+type: object
+properties:
+  shipment_id:
+    type: integer
+    description: Unique identifier for the shipment
+  customer_id:
+    type: integer
+    description: Customer who owns this shipment
+  shipment_status:
+    type: string
+    description: Current status of the shipment
+  is_priority:
+    type: boolean
+    description: Whether this is a priority shipment
+  city:
+    type: string
+    description: Delivery city
+  expected_delivery_date:
+    type: string
+    format: date
+    description: Expected delivery date
+  # Enrichment fields from customer tiers
+  customer_tier:
+    type: string
+    description: Customer's service tier (Gold, Silver, Bronze)
+  customer_region:
+    type: string
+    description: Customer's geographic region
+  account_manager:
+    type: string
+    description: Assigned account manager for this customer
+required:
+  - shipment_id
+  - customer_id

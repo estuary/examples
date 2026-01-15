@@ -1,0 +1,19 @@
+collections: 
+
+  dani-demo/python-derivations/enriched-shipments:
+    schema: enriched-shipments.schema.yaml
+    key:
+      - /shipment_id
+    derive:
+      using:
+        python:
+          module: enriched-shipments.flow.py
+      transforms:
+        - name: shipments
+          source: Artificial-Industries/postgres-shipments/public/shipments
+          shuffle: any
+        - name: customer_tiers
+          source: dani-demo/customer-tiers/Sheet1
+          shuffle:
+            key:
+              - /customer_id

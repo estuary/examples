@@ -1,0 +1,30 @@
+type: object
+properties:
+  customer_id:
+    type: integer
+    description: Unique identifier for the customer
+  total_shipments:
+    type: integer
+    description: Total number of shipments for this customer
+  on_time_count:
+    type: integer
+    description: Number of shipments delivered on or before expected date
+  late_count:
+    type: integer
+    description: Number of shipments delivered after expected date
+  active_shipments:
+    type: integer
+    description: Number of shipments currently in transit
+  avg_delivery_days:
+    type: [number, "null"]
+    description: Average days between shipment creation and delivery
+  is_vip:
+    type: boolean
+    description: Whether customer qualifies for VIP status (10+ shipments)
+  last_shipment_date:
+    type: [string, "null"]
+    format: date
+    description: Date of most recent shipment
+required:
+  - customer_id
+  - total_shipments

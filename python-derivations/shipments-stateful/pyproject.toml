@@ -1,0 +1,13 @@
+[project]
+name = "dani-demo-python-derivations-customer-metrics"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.0",
+    "pyright>=1.1",
+]
+
+[tool.pylsp-mypy]
+enabled = true
+
+# IDE configuration is in pyrightconfig.json
