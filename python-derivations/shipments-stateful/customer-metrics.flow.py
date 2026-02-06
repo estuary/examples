@@ -99,9 +99,9 @@ class Derivation(IDerivation):
         """
         doc = read.doc
 
-        # Ensure required fields are not None
-        assert doc.customer_id is not None, "customer_id cannot be None"
-        assert doc.shipment_status is not None, "shipment_status cannot be None"
+        # Skip documents missing required fields instead of crashing
+        if doc.customer_id is None or doc.shipment_status is None:
+            return
 
         customer_id = doc.customer_id
         shipment_id = doc.id
