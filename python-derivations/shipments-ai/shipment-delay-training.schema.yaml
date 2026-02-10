@@ -1,0 +1,28 @@
+type: object
+properties:
+  shipment_id:
+    type: integer
+  customer_id:
+    type: integer
+  total_shipments:
+    type: integer
+  on_time_count:
+    type: integer
+  late_count:
+    type: integer
+  active_shipments:
+    type: integer
+  avg_delivery_days:
+    type: [number, "null"]
+  label:
+    type: integer
+    enum: [0, 1]
+
+required:
+  - shipment_id
+  - customer_id
+  - total_shipments
+  - on_time_count
+  - late_count
+  - active_shipments
+  - label
