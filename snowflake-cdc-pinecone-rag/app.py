@@ -14,12 +14,12 @@ logging.basicConfig(
 )
 
 st.set_page_config(
-    page_title="Real-time RAG with Estuary Flow", page_icon="./app/static/favicon.ico"
+    page_title="Real-time RAG with Estuary", page_icon="./app/static/favicon.ico"
 )
 
 with st.sidebar:
     st.markdown(
-        "**Start building real-time data products with [Estuary Flow](https://www.estuary.dev).**"
+        "**Start building real-time data products with [Estuary](https://www.estuary.dev).**"
     )
 
 
@@ -30,7 +30,7 @@ load_dotenv()
 # Streamlit UI elements
 st.write("## Chat with Snowflake ❄️")
 
-st.image("estuary_logo.png", caption="Powered By Estuary Flow")
+st.image("estuary_logo.png", caption="Powered By Estuary")
 
 
 image_width = 300
