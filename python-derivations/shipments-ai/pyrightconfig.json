@@ -1,0 +1,6 @@
+{
+  "extraPaths": [
+    "flow_generated/python"
+  ],
+  "typeCheckingMode": "strict"
+}

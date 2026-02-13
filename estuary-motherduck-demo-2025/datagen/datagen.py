@@ -257,7 +257,7 @@ def main():
                 insert_review(conn, product_ids, product_names)
                 print("Inserted new review.")
 
-            time.sleep(1)  # Wait for 1 second before the next operation
+            time.sleep(3)  # Wait for 1 second before the next operation
 
     except KeyboardInterrupt:
         print("Process interrupted by user.")

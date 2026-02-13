@@ -1,0 +1,14 @@
+collections:
+  dani-demo/python-derivations/processed-shipments:
+    schema: processed-shipments.schema.yaml
+    key:
+      - /id
+    derive:
+      using:
+        python:
+          module: processed-shipments.flow.py
+      transforms:
+        - name: shipments
+          source: Artificial-Industries/postgres-shipments/public/shipments
+          shuffle: any
+          backfill: 1

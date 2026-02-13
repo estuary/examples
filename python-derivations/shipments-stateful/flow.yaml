@@ -1,0 +1,15 @@
+collections:
+  dani-demo/python-derivations/customer-metrics:
+    schema: customer-metrics.schema.yaml
+    key:
+      - /customer_id
+    derive:
+      using:
+        python:
+          module: customer-metrics.flow.py
+      transforms:
+        - name: shipments
+          source: Artificial-Industries/postgres-shipments/public/shipments
+          shuffle:
+            key:
+              - /customer_id

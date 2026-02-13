@@ -1,0 +1,16 @@
+type: object
+properties:
+  id:
+    type: integer
+  full_address:
+    type: string
+  is_urgent:
+    type: boolean
+  status_summary:
+    type: string
+  days_until_delivery:
+    type: integer
+required:
+  - id
+  - full_address
+  - status_summary
