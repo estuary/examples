@@ -1,5 +1,5 @@
-# Real-time fraud detection with Estuary Flow & Databricks
+# Real-time fraud detection with Estuary & Databricks
 
-How to implement a real-time fraud detection pipeline with Estuary Flow and Databricks
+How to implement a real-time fraud detection pipeline with Estuary and Databricks
 
 See blog post for details: https://estuary.dev/real-time-fraud-detection-databricks/
