@@ -1,0 +1,13 @@
+services:
+  datagen:
+    build: datagen
+    container_name: mongodb-datagen
+    restart: unless-stopped
+
+    environment:
+      MONGODB_HOST: "cluster0.vun5h.mongodb.net"
+      MONGODB_PORT: "27017"
+      MONGODB_USER: "mongo"
+      MONGODB_PASSWORD: "mongo"
+      MONGODB_DB: "airbnb"
+      MONGODB_COLLECTION: "reviews"
