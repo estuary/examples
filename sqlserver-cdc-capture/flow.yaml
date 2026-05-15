@@ -1,0 +1,18 @@
+import:
+- dani-demo/flow.yaml
+captures:
+  dani-demo/sqlserver-cdc/source-sqlserver:
+    endpoint:
+      connector:
+        image: ghcr.io/estuary/source-sqlserver:v0
+        config:
+          address: 0.tcp.sa.ngrok.io:11059
+          database: SampleDB
+          user: flow_capture
+          password: Secretsecret1
+          historyMode: false
+    bindings:
+    - resource:
+        namespace: dbo
+        stream: sales
+      target: dani-demo/sqlserver-cdc/dbo/sales
