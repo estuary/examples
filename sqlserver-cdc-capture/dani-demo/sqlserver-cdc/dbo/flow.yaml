@@ -1,0 +1,5 @@
+collections:
+  dani-demo/sqlserver-cdc/dbo/sales:
+    schema: sales.schema.yaml
+    key:
+    - /sale_id
