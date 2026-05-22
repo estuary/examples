@@ -40,21 +40,6 @@ GRANT SELECT ON SCHEMA::cdc TO flow_capture;
 GRANT VIEW DATABASE STATE TO flow_capture;
 GO
 
--- Create the watermarks table if it doesn't already exist and grant permissions
-IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'flow_watermarks')
-BEGIN
-    CREATE TABLE dbo.flow_watermarks(slot INT PRIMARY KEY, watermark NVARCHAR(255));
-    GRANT SELECT, INSERT, UPDATE ON dbo.flow_watermarks TO flow_capture;
-END
-GO
-
--- Enable CDC on the watermarks table if it's not already enabled
-IF NOT EXISTS (SELECT * FROM cdc.change_tables WHERE source_object_id = OBJECT_ID('dbo.flow_watermarks'))
-BEGIN
-    EXEC sys.sp_cdc_enable_table @source_schema = 'dbo', @source_name = 'flow_watermarks', @role_name = 'flow_capture';
-END
-GO
-
 -- Create the sales table if it doesn't already exist
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'sales')
 BEGIN

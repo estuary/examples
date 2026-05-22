@@ -1,7 +1,7 @@
 import:
-- dani-demo/flow.yaml
+- your-prefix/flow.yaml
 captures:
-  dani-demo/sqlserver-cdc/source-sqlserver:
+  your-prefix/sqlserver-cdc/source-sqlserver:
     endpoint:
       connector:
         image: ghcr.io/estuary/source-sqlserver:v0
@@ -15,4 +15,4 @@ captures:
     - resource:
         namespace: dbo
         stream: sales
-      target: dani-demo/sqlserver-cdc/dbo/sales
+      target: your-prefix/sqlserver-cdc/dbo/sales
