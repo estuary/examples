@@ -1,0 +1,97 @@
+$defs:
+  DboSales:
+    type: object
+    required:
+    - sale_id
+    $anchor: DboSales
+    properties:
+      customer_id:
+        type: integer
+        description: '(source type: non-nullable int)'
+      product_id:
+        type: integer
+        description: '(source type: non-nullable int)'
+      quantity:
+        type: integer
+        description: '(source type: non-nullable int)'
+      sale_date:
+        type: string
+        format: date-time
+        description: '(source type: non-nullable datetime)'
+      sale_id:
+        type: integer
+        description: '(source type: non-nullable int)'
+      total_price:
+        type: number
+        description: '(source type: non-nullable float)'
+      unit_price:
+        type: number
+        description: '(source type: non-nullable float)'
+allOf:
+- if:
+    properties:
+      _meta:
+        properties:
+          op:
+            const: d
+  then:
+    reduce:
+      delete: true
+      strategy: merge
+  else:
+    reduce:
+      strategy: merge
+  required:
+  - _meta
+  properties:
+    _meta:
+      type: object
+      required:
+      - op
+      - source
+      properties:
+        before:
+          $ref: '#DboSales'
+          description: Record state immediately before this change was applied.
+          reduce:
+            strategy: firstWriteWins
+        op:
+          enum:
+          - c
+          - d
+          - u
+          description: 'Change operation type: ''c'' Create/Insert, ''u'' Update, ''d'' Delete.'
+        source:
+          properties:
+            ts_ms:
+              type: integer
+              description: Unix timestamp (in millis) at which this event was recorded by the database.
+            schema:
+              type: string
+              description: Database schema (namespace) of the event.
+            snapshot:
+              type: boolean
+              description: Snapshot is true if the record was produced from an initial table backfill and unset if produced from the replication log.
+            table:
+              type: string
+              description: Database table of the event.
+            lsn:
+              type: string
+              contentEncoding: base64
+              description: The LSN at which a CDC event occurred. Only set for CDC events
+            seqval:
+              type: string
+              contentEncoding: base64
+              description: Sequence value used to order changes to a row within a transaction. Only set for CDC events
+            updateMask:
+              description: A bit mask with a bit corresponding to each captured column identified for the capture instance. Only set for CDC events
+          type: object
+          required:
+          - schema
+          - table
+          - lsn
+          - seqval
+      reduce:
+        strategy: merge
+- $ref: '#DboSales'
+x-infer-schema: true

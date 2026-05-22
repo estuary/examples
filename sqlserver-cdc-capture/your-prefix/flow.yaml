@@ -1,0 +1,2 @@
+import:
+- sqlserver-cdc/flow.yaml
