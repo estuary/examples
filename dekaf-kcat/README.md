@@ -31,7 +31,7 @@ Source ──capture──▶ Estuary collection ──Dekaf (Kafka API)──�
 
 ## Running it
 
-The bundled `consume.sh` ships with the legacy bootstrap host `dekaf.fly.dev:9092`, which no longer resolves. Update that one line to Estuary's current Dekaf endpoint, `dekaf.estuary-data.com:9092`, so the script reads:
+The script as committed:
 
 ```bash
 kcat -C \
@@ -64,7 +64,7 @@ Flags explained:
 | `-X sasl.username` | `{}` | Public demo placeholder (use your Dekaf task name for private collections) |
 | `-X sasl.password` | (empty) | Public demo placeholder (use your Estuary access token for private collections) |
 
-> **Note on the bootstrap host:** Estuary's current Dekaf endpoint is `dekaf.estuary-data.com:9092` (with the schema registry at `https://dekaf.estuary-data.com`). The bundled `consume.sh` still references the legacy host `dekaf.fly.dev:9092`, which no longer resolves — switch that line to `dekaf.estuary-data.com:9092`. See the [Dekaf reading guide](https://docs.estuary.dev/guides/dekaf_reading_collections_from_kafka/) for the authoritative endpoint and connection settings.
+> **Note on the bootstrap host:** the script uses Estuary's production Dekaf endpoint, `dekaf.estuary-data.com:9092` (with the schema registry at `https://dekaf.estuary-data.com`). A legacy host, `dekaf.fly.dev:9092`, appeared in older versions of this example but no longer resolves — use `dekaf.estuary-data.com:9092`. See the [Dekaf reading guide](https://docs.estuary.dev/guides/dekaf_reading_collections_from_kafka/) for the authoritative endpoint and connection settings.
 
 ## Reading your own collections
 

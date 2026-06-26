@@ -166,7 +166,7 @@ class Derivation(IDerivation):
         # Decrement the appropriate counters based on what we knew
         customer.total_shipments = max(0, customer.total_shipments - 1)
         
-        if previous_status in ('In Transit', 'At Checkpoint', 'Out for Delivery'):
+        if previous_status in ('In Transit', 'At Checkpoint', 'Out For Delivery'):
             customer.active_shipments = max(0, customer.active_shipments - 1)
         elif previous_status == 'Delivered':
             customer.delivered_count = max(0, customer.delivered_count - 1)
@@ -193,10 +193,10 @@ class Derivation(IDerivation):
         # Handle status transitions. The key insight is that we need to
         # properly account for a shipment moving between states.
         is_active_status = current_status in (
-            'In Transit', 'At Checkpoint', 'Out for Delivery'
+            'In Transit', 'At Checkpoint', 'Out For Delivery'
         )
         was_active_status = previous_status in (
-            'In Transit', 'At Checkpoint', 'Out for Delivery'
+            'In Transit', 'At Checkpoint', 'Out For Delivery'
         ) if previous_status else False
         
         # Update active shipment count based on status transition

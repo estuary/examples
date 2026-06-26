@@ -4,7 +4,7 @@ SELECT
     s.current_location_longitude,
     s.expected_delivery_date AS original_eta,
     s.expected_delivery_date + INTERVAL t.impact_on_ETA_minutes MINUTE AS updated_eta,
-    arrayJoin(s.delays_reason, ', ') AS delay_reasons
+    arrayStringConcat(s.delays__reason, ', ') AS delay_reasons
 FROM 
     shipments AS s
 LEFT JOIN 

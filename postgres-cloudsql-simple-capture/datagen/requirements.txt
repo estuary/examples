@@ -1,2 +1,4 @@
 Faker==25.1.0
 cloud-sql-python-connector[pg8000]
+SQLAlchemy
+python-dotenv

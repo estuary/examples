@@ -52,34 +52,15 @@ Data flow in Estuary terms:
 
 ## Step 1 — Generate the MongoDB CDC workload
 
-`datagen/datagen.py` reads its MongoDB connection from environment variables (`MONGODB_USER`, `MONGODB_PASSWORD`, `MONGODB_HOST`) and builds a `mongodb+srv://` connection string. Point it at your MongoDB (Atlas recommended).
-
-The bundled `docker-compose.yml` hardcodes placeholder values in its `environment:` block (`MONGODB_HOST: "localhost"`, `MONGODB_USER: "mongo"`, `MONGODB_PASSWORD: "mongo"`, plus an unused `MONGODB_PORT`) that will **not** reach an Atlas cluster. Edit those values to your MongoDB credentials/host first:
-
-```yaml
-# docker-compose.yml
-    environment:
-      MONGODB_HOST: "cluster0.xxxxx.mongodb.net"   # your Atlas cluster host
-      MONGODB_USER: "<your-mongodb-user>"
-      MONGODB_PASSWORD: "<your-mongodb-password>"
-```
-
-Then build and run the generator:
+`datagen/datagen.py` reads its MongoDB connection from environment variables (`MONGODB_USER`, `MONGODB_PASSWORD`, `MONGODB_HOST`) and builds a `mongodb+srv://` connection string. The bundled `docker-compose.yml` passes these through from your shell (`${VAR:-default}` substitution), so export them and start the generator:
 
 ```bash
 # From the shipments_eta/ directory.
-docker compose up --build
-```
-
-Alternatively, run it without Docker — `datagen.py` picks up the exported env vars directly:
-
-```bash
-cd datagen
-pip install -r requirements.txt
 export MONGODB_USER=<your-mongodb-user>
 export MONGODB_PASSWORD=<your-mongodb-password>
 export MONGODB_HOST=<your-cluster-host>   # e.g. cluster0.xxxxx.mongodb.net
-python -u datagen.py
+
+docker compose up --build
 ```
 
 `datagen.py` builds the connection string as:
@@ -101,7 +82,7 @@ Watch the logs to confirm inserts/updates are happening:
 docker compose logs -f datagen
 ```
 
-> Note: the bundled `docker-compose.yml` defines only the generator and ships with placeholder `environment` values (`localhost` / `mongo` / `mongo`) plus an unused `MONGODB_PORT`. On the Docker path, Compose's `environment` values override your shell, so edit them in the file as shown above rather than relying on `export`. Because `datagen.py` connects with `mongodb+srv://`, the port is ignored. If you run MongoDB locally instead of Atlas, expose it to Estuary's managed connectors with a publicly reachable host or an ngrok TCP tunnel (`ngrok tcp 27017`).
+> Note: the bundled `docker-compose.yml` defines only the generator and passes `MONGODB_HOST`, `MONGODB_USER`, and `MONGODB_PASSWORD` through from your shell via `${VAR:-default}` substitution, so the `export`s above take effect. The defaults are non-functional placeholders — set all three. Because `datagen.py` connects with `mongodb+srv://`, no port is needed. If you run MongoDB locally instead of Atlas, expose it to Estuary's managed connectors with a publicly reachable host or an ngrok TCP tunnel (`ngrok tcp 27017`).
 
 ## Step 2 — Configure the Estuary MongoDB capture
 
@@ -166,7 +147,7 @@ The transformations run as ClickHouse SQL inside Tinybird:
   - `route_performance` — congestion insights aggregated per origin–destination route.
   - `shipment_status_distribution` — status counts per route.
   - `top_delayed_customers` — customers with the most cumulative delay minutes.
-- **`eta.sql`** is a standalone query showing the core ETA recompute: join `shipments` to `traffic_weather` on `route_id` for `status = 'In Transit'` and return original vs. updated ETA with delay reasons. Note: as committed it references `arrayJoin(s.delays_reason, ', ')`, but the Tinybird Data Source flattens that field to the `Array(String)` column `delays__reason` (double underscore) — to run it against the Data Source, use `arrayStringConcat(s.delays__reason, ', ')`.
+- **`eta.sql`** is a standalone query showing the core ETA recompute: join `shipments` to `traffic_weather` on `route_id` for `status = 'In Transit'` and return original vs. updated ETA with delay reasons. It uses `arrayStringConcat(s.delays__reason, ', ')` to match the flattened `Array(String)` column `delays__reason` in `shipments.datasource`.
 
 Publish the relevant Pipe nodes as API endpoints (`Shipping.json`, `route_perf.json`, `route_staus_stats.json`) so the dashboard can query them.
 

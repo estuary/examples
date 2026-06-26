@@ -36,7 +36,7 @@ Because Estuary is fully managed, the Postgres database must be reachable from t
 - **`postgres/init.sql`** — runs once on first container start. Creates the `flow_capture` user with `REPLICATION` (password `password`), grants `pg_read_all_data` / `pg_write_all_data`, creates the `public.flow_watermarks` table, creates the `flow_publication` publication (with `publish_via_partition_root = true`), adds `public.flow_watermarks` and `public.sales` to it, and creates the `public.sales` table.
 - **`datagen/datagen.py`** — connects to a **Google Cloud SQL** instance using the [Cloud SQL Python Connector](https://github.com/GoogleCloudPlatform/cloud-sql-python-connector) (`pg8000` driver), creates the `sales` table if needed, and loops once per second performing weighted random operations: 70% inserts, 20% deletes, 10% updates. This generates the CDC event stream the Estuary capture consumes.
 - **`datagen/Dockerfile`** — `python:3.12` image that installs requirements and runs `python -u datagen.py`.
-- **`datagen/requirements.txt`** — `Faker==25.1.0` and `cloud-sql-python-connector[pg8000]`. Note: `datagen.py` also imports `sqlalchemy` and `python-dotenv`, which aren't pinned here — install them too (`pip install SQLAlchemy python-dotenv`) or add them to this file before running the generator outside Docker.
+- **`datagen/requirements.txt`** — `Faker==25.1.0`, `cloud-sql-python-connector[pg8000]`, `SQLAlchemy`, and `python-dotenv`.
 
 ### `sales` table schema
 
