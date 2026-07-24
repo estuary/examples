@@ -1,0 +1,35 @@
+# flow/materialization.flow.yaml
+#
+# Declarative equivalent of the Snowflake materialization created in the
+# dashboard. Publish it with:
+#
+#   flowctl catalog publish --source flow/materialization.flow.yaml
+#
+# Fill in your Snowflake account host, and paste the PKCS#8 private key you
+# generated in snowflake/setup.sql as `credentials.privateKey`. Standard
+# updates (the default) keep the Snowflake table an exact mirror of Postgres.
+materializations:
+  yourprefix/pg-snowflake-demo/destination-snowflake:
+    endpoint:
+      connector:
+        image: ghcr.io/estuary/materialize-snowflake:dev
+        config:
+          host: "<account>.snowflakecomputing.com"
+          database: CDC_DEMO
+          schema: PUBLIC
+          warehouse: ESTUARY_WH
+          credentials:
+            auth_type: jwt
+            user: ESTUARY_USER
+            privateKey: |
+              -----BEGIN PRIVATE KEY-----
+              <contents of rsa_key.p8>
+              -----END PRIVATE KEY-----
+          syncSchedule:
+            syncFrequency: 5m
+    bindings:
+      - resource:
+          table: orders
+          schema: PUBLIC
+          delta_updates: false
+        source: yourprefix/pg-snowflake-demo/orders
