@@ -1,0 +1,8 @@
+# Snowflake key-pair credentials
+rsa_key.p8
+rsa_key.pub
+*.p8
+
+# Python
+__pycache__/
+*.pyc

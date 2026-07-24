@@ -1,0 +1,46 @@
+# flow/capture.flow.yaml
+#
+# Declarative equivalent of the capture created in the Estuary dashboard.
+# Publish it with:
+#
+#   flowctl catalog publish --source flow/capture.flow.yaml
+#
+# Replace `yourprefix` with your Estuary tenant prefix, and set `address` to the
+# ngrok host/port that `ngrok tcp 5432` prints for you.
+captures:
+  yourprefix/pg-snowflake-demo/source-postgres:
+    endpoint:
+      connector:
+        image: ghcr.io/estuary/source-postgres:dev
+        config:
+          address: "4.tcp.ngrok.io:12345"
+          database: postgres
+          user: flow_capture
+          password: secret
+    bindings:
+      - resource:
+          namespace: public
+          stream: orders
+        target: yourprefix/pg-snowflake-demo/orders
+
+collections:
+  yourprefix/pg-snowflake-demo/orders:
+    key: [/order_id]
+    schema:
+      type: object
+      properties:
+        order_id:
+          type: string
+        customer_name:
+          type: string
+        amount:
+          type: string
+        status:
+          type: string
+        event_ts:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [order_id]
