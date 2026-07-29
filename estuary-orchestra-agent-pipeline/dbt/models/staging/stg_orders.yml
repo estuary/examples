@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: Typed, cleaned one-row-per-order staging model.
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: amount
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["pending", "shipped", "delivered"]

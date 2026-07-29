@@ -1,0 +1,45 @@
+# flow/materialization.flow.yaml
+#
+# This is the kind of spec the Estuary `materialize-snowflake-create` agent
+# skill authors for you. Publish it with:
+#
+#   flowctl catalog publish --source flow/materialization.flow.yaml
+#
+# Before publishing, validate against Snowflake without writing anything:
+#
+#   flowctl catalog test --source flow/materialization.flow.yaml
+#
+# Fill in your Snowflake account host, and paste the PKCS#8 private key you
+# generated in snowflake/setup.sql as `credentials.private_key`. Standard
+# updates (the default, `delta_updates: false`) keep the Snowflake table an
+# exact mirror of the Postgres table -- that mirror is what dbt reads as its
+# source.
+materializations:
+  yourprefix/agent-demo/destination-snowflake:
+    endpoint:
+      connector:
+        image: ghcr.io/estuary/materialize-snowflake:v4
+        config:
+          host: "<account>.snowflakecomputing.com"
+          database: AGENT_DEMO
+          schema: PUBLIC
+          # `warehouse` is required unless the Snowflake user has a default
+          # warehouse set -- otherwise the connector fails with
+          # "no warehouse configured and default warehouse not set".
+          warehouse: AGENT_WH
+          role: AGENT_ROLE
+          timestamp_type: TIMESTAMP_LTZ
+          credentials:
+            auth_type: jwt
+            user: AGENT_USER
+            private_key: |
+              -----BEGIN PRIVATE KEY-----
+              <contents of rsa_key.p8>
+              -----END PRIVATE KEY-----
+          syncSchedule:
+            syncFrequency: 5m
+    bindings:
+      - resource:
+          table: orders
+          delta_updates: false
+        source: yourprefix/agent-demo/public/orders

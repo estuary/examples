@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: estuary
+    description: >
+      Raw tables kept in sync by Estuary. AGENT_DEMO.PUBLIC.ORDERS is a live
+      mirror of the operational Postgres table, updated continuously by the
+      Snowflake materialization.
+    database: AGENT_DEMO
+    schema: PUBLIC
+    tables:
+      - name: orders
+        description: One row per order, mirrored from Postgres via CDC.
+        # A freshness expectation gives dbt (and, through it, Orchestra) a way to
+        # catch a stalled capture: if no order has changed in 6 hours the source
+        # is stale, in 24 hours it's an error.
+        loaded_at_field: updated_at
+        freshness:
+          warn_after: { count: 6, period: hour }
+          error_after: { count: 24, period: hour }
+        columns:
+          - name: order_id
+            tests: [unique, not_null]

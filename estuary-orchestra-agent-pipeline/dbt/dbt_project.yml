@@ -1,0 +1,18 @@
+name: "agent_demo"
+version: "1.0.0"
+config-version: 2
+
+# The profile Orchestra's DBT_CORE task supplies at run time. Locally, define a
+# matching profile in ~/.dbt/profiles.yml (see profiles.example.yml).
+profile: "agent_demo"
+
+model-paths: ["models"]
+
+models:
+  agent_demo:
+    # The profile's schema (ANALYTICS) keeps transformed tables separate from
+    # the raw PUBLIC.ORDERS mirror Estuary maintains.
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
