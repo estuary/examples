@@ -1,0 +1,60 @@
+# flow/capture.flow.yaml
+#
+# This is the kind of spec the Estuary `capture-postgres-create` agent skill
+# authors for you. It is included here so you can see (and version-control) the
+# result, and publish it directly if you prefer flowctl over the dashboard:
+#
+#   flowctl catalog publish --source flow/capture.flow.yaml
+#
+# Replace `yourprefix` with your Estuary tenant prefix, and set `address` to the
+# ngrok host/port that `ngrok tcp 5432` prints for you.
+#
+# Rather than hand-writing this, you can have the connector discover the tables
+# for you -- write just the `endpoint` block with `bindings: []`, then run
+# `flowctl discover --source flow/capture.flow.yaml`. Discovery fills in the
+# bindings and an accurate inferred schema, which is what the skill does.
+captures:
+  yourprefix/agent-demo/source-postgres:
+    endpoint:
+      connector:
+        image: ghcr.io/estuary/source-postgres:v3
+        config:
+          address: "4.tcp.ngrok.io:12345"
+          database: postgres
+          user: flow_capture
+          # historyMode: false reduces each change to the row's final state,
+          # so the destination mirrors Postgres. Set it to true to keep every
+          # individual change event instead.
+          historyMode: false
+          credentials:
+            auth_type: UserPassword
+            password: secret
+    bindings:
+      - resource:
+          namespace: public
+          stream: orders
+        target: yourprefix/agent-demo/public/orders
+
+collections:
+  yourprefix/agent-demo/public/orders:
+    key: [/order_id]
+    schema:
+      type: object
+      properties:
+        order_id:
+          type: string
+        customer_name:
+          type: string
+        # Postgres numeric and timestamptz arrive as JSON strings; the dbt
+        # staging model casts them to real types.
+        amount:
+          type: string
+        status:
+          type: string
+        event_ts:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [order_id]

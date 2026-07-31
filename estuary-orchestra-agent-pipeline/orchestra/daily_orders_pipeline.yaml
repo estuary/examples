@@ -1,0 +1,177 @@
+# daily_orders_pipeline.yaml
+#
+# This is the kind of pipeline the Orchestra `create-orchestra-pipeline` and
+# `write-snowflake-dq-tests` agent skills author for you. It orchestrates the
+# batch layer that sits on top of Estuary's real-time stream:
+#
+#   1. check_ingestion  -- is the Estuary pipeline actually healthy and fresh?
+#   2. transform        -- rebuild the dbt models over the streamed data
+#   3. quality_tests    -- assert the rebuilt marts are sane
+#
+# Stage 1 is the hinge between the two tools: Orchestra has a native ESTUARY
+# integration, so the batch layer refuses to transform stale or broken data
+# instead of silently publishing it.
+#
+# Replace `yourprefix` with your Estuary tenant prefix. Connections are
+# referenced as ${{ ENV.* }} environment variables -- configure them in the
+# Orchestra UI (Settings -> Connections, then Environments) rather than pasting
+# credentials into this file.
+version: v1
+name: 'Daily Orders Analytics #estuary #dbt #snowflake #dataquality'
+
+# Six-field cron, minute-first: 06:00 UTC daily, after a night of streamed
+# changes has landed.
+schedule:
+  - name: Daily 6am UTC
+    cron: 0 6 ? * * *
+    timezone: UTC
+
+pipeline:
+  check_ingestion:
+    name: Check Estuary ingestion
+    depends_on: []
+    tasks:
+      # ESTUARY_CHECK_FLOW reads the task's OpenMetrics endpoint and compares
+      # deltas since the last check. error_threshold: 0 means any new error
+      # fails the run; latency_threshold is seconds since the task last
+      # published data, so a stalled capture is caught here rather than
+      # surfacing as mysteriously stale dashboards.
+      #
+      # IMPORTANT: give latency_threshold real headroom. The reported metric
+      # tracks commit-round acknowledgement, NOT row freshness, so it runs much
+      # higher than actual data lag -- measured against a 5m syncFrequency it
+      # reported 694-945s while Snowflake was only ~9s behind Postgres. 900
+      # false-alarms; 1800 is a realistic floor for a 5m sync. If you leave the
+      # Snowflake connector on its 30m default, go higher still.
+      #
+      # Also note the first check has no prior sample to diff against, so it
+      # reports the task's whole failure history as "new". Expect run one to be
+      # noisy and judge from run two onward.
+      check_capture:
+        integration: ESTUARY
+        integration_job: ESTUARY_CHECK_FLOW
+        parameters:
+          task: yourprefix/agent-demo/source-postgres
+          error_threshold: 0
+          warn_threshold: 0
+          latency_threshold: 1800
+        depends_on: []
+        name: Check Postgres capture
+        connection: ${{ ENV.ESTUARY_CONNECTION }}
+
+      check_materialization:
+        integration: ESTUARY
+        integration_job: ESTUARY_CHECK_FLOW
+        parameters:
+          task: yourprefix/agent-demo/destination-snowflake
+          error_threshold: 0
+          warn_threshold: 0
+          latency_threshold: 1800
+        depends_on: []
+        name: Check Snowflake materialization
+        connection: ${{ ENV.ESTUARY_CONNECTION }}
+
+  transform:
+    name: Rebuild dbt models
+    depends_on: [check_ingestion]
+    tasks:
+      dbt_build:
+        integration: DBT_CORE
+        integration_job: DBT_CORE_EXECUTE
+        parameters:
+          # `commands` is a single string, not a list -- and note it really is
+          # ONE command: newlines get flattened into one shell invocation, so
+          # "dbt deps\ndbt build" runs as `dbt deps dbt build ...` and fails
+          # with "No such option '--select'".
+          #
+          # You don't need `dbt deps` anyway: Orchestra clones the repo and
+          # installs packages.yml dependencies itself before running this.
+          commands: dbt build --select stg_orders daily_order_metrics
+          # Path to the dbt project within the repo. "." when dbt_project.yml
+          # is at the repo root.
+          project_dir: "."
+          package_manager: PIP
+        depends_on: []
+        name: dbt build
+        connection: ${{ ENV.DBT_CONNECTION }}
+
+  quality_tests:
+    name: Snowflake data-quality tests
+    depends_on: [transform]
+    tasks:
+      # SNOWFLAKE_RUN_TEST runs the statement and counts the returned rows --
+      # each query is written so a non-empty result means "this is wrong".
+      # error_threshold_expression '> 0' turns any violating row into a failure.
+
+      # Freshness: has anything landed recently? Written as a HAVING so it
+      # returns exactly one row when the newest order is too old.
+      freshness:
+        integration: SNOWFLAKE
+        integration_job: SNOWFLAKE_RUN_TEST
+        parameters:
+          statement: >-
+            select max(updated_at) as newest
+            from AGENT_DEMO.ANALYTICS.STG_ORDERS
+            having max(updated_at) < dateadd('hour', -24, current_timestamp())
+          error_threshold_expression: '> 0'
+          warn_threshold_expression: '> 0'
+        depends_on: []
+        name: Orders are fresh
+        connection: ${{ ENV.SNOWFLAKE_CONNECTION }}
+
+      # Revenue sanity: no null or negative money in the published mart.
+      revenue_sane:
+        integration: SNOWFLAKE
+        integration_job: SNOWFLAKE_RUN_TEST
+        parameters:
+          statement: >-
+            select order_date, status, total_amount
+            from AGENT_DEMO.ANALYTICS.DAILY_ORDER_METRICS
+            where total_amount is null or total_amount < 0
+          error_threshold_expression: '> 0'
+          warn_threshold_expression: '> 0'
+        depends_on: []
+        name: Revenue is non-negative
+        connection: ${{ ENV.SNOWFLAKE_CONNECTION }}
+
+      # Status enum: the CDC stream should only ever carry these three values.
+      status_values:
+        integration: SNOWFLAKE
+        integration_job: SNOWFLAKE_RUN_TEST
+        parameters:
+          statement: >-
+            select distinct status
+            from AGENT_DEMO.ANALYTICS.STG_ORDERS
+            where status not in ('pending', 'shipped', 'delivered')
+          error_threshold_expression: '> 0'
+          warn_threshold_expression: '> 0'
+        depends_on: []
+        name: Status values are known
+        connection: ${{ ENV.SNOWFLAKE_CONNECTION }}
+
+      # No future-dated events -- a classic sign of a broken source clock.
+      no_future_events:
+        integration: SNOWFLAKE
+        integration_job: SNOWFLAKE_RUN_TEST
+        parameters:
+          statement: >-
+            select order_id, event_ts
+            from AGENT_DEMO.ANALYTICS.STG_ORDERS
+            where event_ts > current_timestamp()
+          error_threshold_expression: '> 0'
+          warn_threshold_expression: '> 0'
+        depends_on: []
+        name: No future-dated orders
+        connection: ${{ ENV.SNOWFLAKE_CONNECTION }}
+
+# Alerting. Uncomment once you've added a Slack connection in the Orchestra UI
+# and filled in its connection_id -- validation rejects a SLACK destination when
+# the account has no default Slack connection.
+#
+# alerts:
+#   - name: On Failure
+#     statuses: [FAILED, WARNING]
+#     destinations:
+#       - integration: SLACK
+#         destination: '#data-alerts'
+#         connection_id: <your-slack-connection-id>

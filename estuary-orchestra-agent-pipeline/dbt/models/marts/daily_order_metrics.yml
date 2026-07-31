@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: daily_order_metrics
+    description: Daily order counts and revenue, broken out by status.
+    columns:
+      - name: order_date
+        tests: [not_null]
+      - name: order_count
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: false
+      - name: total_amount
+        tests: [not_null]

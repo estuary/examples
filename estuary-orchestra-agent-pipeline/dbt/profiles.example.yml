@@ -1,0 +1,18 @@
+# Copy to ~/.dbt/profiles.yml (or point DBT_PROFILES_DIR here) to run dbt
+# locally. In production, Orchestra's DBT_CORE task injects the connection
+# defined by its Snowflake connection instead, so this file is for local runs.
+agent_demo:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "<account>"        # e.g. ab12345.us-east-1
+      user: AGENT_USER
+      # Key-pair auth, matching snowflake/setup.sql. Point this at the private
+      # key you generated there.
+      private_key_path: "~/.ssh/rsa_key.p8"
+      role: AGENT_ROLE
+      warehouse: AGENT_WH
+      database: AGENT_DEMO
+      schema: ANALYTICS
+      threads: 4

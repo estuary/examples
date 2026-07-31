@@ -1,0 +1,14 @@
+# Snowflake key-pair credentials
+rsa_key.p8
+rsa_key.pub
+*.p8
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+profiles.yml
+
+# Python
+__pycache__/
+*.pyc
