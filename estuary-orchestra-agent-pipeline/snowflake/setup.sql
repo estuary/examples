@@ -19,6 +19,7 @@ create role if not exists identifier($svc_role);
 grant role identifier($svc_role) to role SYSADMIN;
 
 create user if not exists identifier($svc_user)
+  type = service
   default_role = $svc_role
   default_warehouse = $warehouse_name;
 grant role identifier($svc_role) to user identifier($svc_user);
