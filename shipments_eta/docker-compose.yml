@@ -5,7 +5,9 @@ services:
     restart: unless-stopped
 
     environment:
-      MONGODB_HOST: "localhost"
-      MONGODB_PORT: "27017"
-      MONGODB_USER: "mongo"
-      MONGODB_PASSWORD: "mongo"
+      # datagen.py builds a mongodb+srv:// connection string (no port needed).
+      # Export MONGODB_HOST / MONGODB_USER / MONGODB_PASSWORD before `docker compose up`;
+      # the placeholder defaults below are non-functional and must be overridden.
+      MONGODB_HOST: "${MONGODB_HOST:-your-cluster.mongodb.net}"
+      MONGODB_USER: "${MONGODB_USER:-your-user}"
+      MONGODB_PASSWORD: "${MONGODB_PASSWORD:-your-password}"
