@@ -303,4 +303,5 @@ Then disable or delete the Estuary capture/materialization (dashboard or
 - Estuary agent skills — https://docs.estuary.dev/guides/agent-skills/
 - Orchestra agent skills — https://docs.getorchestra.io/docs/guides/orchestra-skills
 - Orchestra pipeline YAML schema — https://docs.getorchestra.io/docs/core-concepts/pipelines/schema
-- Estuary docs — https://docs.estuary.dev/ · Orchestra docs — https://docs.getorchestra.io/
+- Estuary docs — https://docs.estuary.dev/
+- Orchestra docs — https://docs.getorchestra.io/
