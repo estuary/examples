@@ -1,0 +1,20 @@
+services:
+
+  starrocks:
+    image: starrocks/allin1-ubuntu
+    container_name: starrocks
+    hostname: starrocks
+    ports:
+      - "9030:9030"
+      - "8030:8030"
+      - "8040:8040"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: starrocks-ngrok
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'tcp starrocks:9030'
+    ports:
+      - 4040:4040
