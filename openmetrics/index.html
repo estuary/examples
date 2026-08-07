@@ -148,6 +148,16 @@
 
   .card { margin-bottom: 22px; }
   .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .card-details > summary.card-head { cursor: pointer; list-style: none; }
+  .card-details > summary.card-head::-webkit-details-marker { display: none; }
+  .card-title { display: inline-flex; align-items: baseline; }
+  .card-title::before {
+    content: "▸"; display: inline-block; margin-right: 8px; font-size: 12px;
+    color: var(--ink-muted); transition: transform .15s;
+  }
+  .card-details[open] .card-title::before { transform: rotate(90deg); }
+  .card-badge { font: 600 11.5px var(--sans); color: var(--ink-muted); white-space: nowrap; }
+  .card-badge.has-issues { color: var(--status-crit); }
   .card-why {
     font-size: 12.5px; color: var(--ink-muted); margin: 6px 0 16px; padding-left: 12px;
     border-left: 2px solid var(--surface-border);
@@ -280,38 +290,38 @@
       <span class="hint" style="margin:0">Bakes this data into the link so anyone who opens it sees these same results immediately — nothing is sent to any server to make that work.</span>
     </div>
 
-    <div class="card panel" id="cardLag">
-      <div class="card-head"><h2 style="margin:0">Pipeline freshness</h2></div>
-      <p class="card-why">Why customers ask this: "is my materialization/derivation caught up?" is the single most common OpenMetrics question — teams compare <code>*_last_source_published_at_time_seconds</code> against the current time to catch silent lag before a destination goes stale.</p>
+    <details class="card panel card-details" id="cardLag">
+      <summary class="card-head"><span class="card-title"><h2 style="margin:0;display:inline">Pipeline freshness</h2></span><span class="card-badge" id="lagBadge"></span></summary>
+      <p class="card-why">Why customers ask this: "is my materialization/derivation caught up?" is the single most common OpenMetrics question — teams compare <code>*_last_source_published_at_time_seconds</code> against the current time to catch silent lag before a destination goes stale. Tasks running on runtime v2 also report an actual bytes-behind gauge, a real backlog measurement rather than an inferred one, shown alongside it below when available.</p>
       <div class="table-scroll" id="lagTable"></div>
-      <p class="table-note">Thresholds shown (&lt;5m good, 5m–1h delayed, &gt;1h critical) are starting points, not Estuary defaults — tune them to your own SLA. Note this measures <em>reporting</em> latency: if the metrics pipeline itself is delayed, a task can look stale while data is actually flowing.</p>
-    </div>
+      <p class="table-note">"Time since last data" (&lt;5m good, 5m–1h delayed, &gt;1h critical) measures <em>reporting</em> latency, not a confirmed backlog — a quiet, fully-caught-up task looks identical to a stuck one by this measure alone. "Bytes behind" is the more trustworthy signal where it's present: a real queue depth, reported only for tasks on runtime v2. A dash there doesn't mean zero — it means either not-yet-on-v2 or genuinely caught up (Estuary suppresses true zeroes here rather than assert false precision), so don't read a dash as confirmation nothing's wrong. Thresholds shown are starting points, not Estuary defaults — tune them to your own SLA.</p>
+    </details>
 
-    <div class="card panel" id="cardVolume">
-      <div class="card-head"><h2 style="margin:0">Data moved this month</h2></div>
+    <details class="card panel card-details" id="cardVolume">
+      <summary class="card-head"><span class="card-title"><h2 style="margin:0;display:inline">Data moved this month</h2></span><span class="card-badge" id="volumeBadge"></span></summary>
       <p class="card-why">Why customers ask this: "how many bytes have moved, and is the backfill done?" Byte/doc counters answer both — compare captured vs. materialized totals per task to spot a backfill still catching up.</p>
       <div class="table-scroll" id="volumeTable"></div>
       <p class="table-note">Counters are cumulative <strong>month-to-date</strong> and reset at the start of each calendar month — to measure a shorter window, snapshot this endpoint twice and diff the values (or let Prometheus's <code>rate()</code> do it for you).</p>
-    </div>
+    </details>
 
-    <div class="card panel" id="cardErrors">
-      <div class="card-head"><h2 style="margin:0">Errors &amp; warnings by task</h2></div>
+    <details class="card panel card-details" id="cardErrors">
+      <summary class="card-head"><span class="card-title"><h2 style="margin:0;display:inline">Errors &amp; warnings by task</h2></span><span class="card-badge" id="errorsBadge"></span></summary>
       <p class="card-why">Why customers ask this: alerting on raw error counts. One real caveat worth knowing: <code>logged_failures_total</code> can include non-actionable failures like inferred-schema violations — pair it with Estuary's built-in shard-failure alerts (which only fire on repeated failures of the same build) rather than alerting on the raw count alone.</p>
       <div class="table-scroll" id="errorsTable"></div>
-    </div>
+    </details>
 
-    <div class="card panel" id="cardCollections">
-      <div class="card-head"><h2 style="margin:0">Busiest collections</h2></div>
+    <details class="card panel card-details" id="cardCollections">
+      <summary class="card-head"><span class="card-title"><h2 style="margin:0;display:inline">Busiest collections</h2></span><span class="card-badge" id="collectionsBadge"></span></summary>
       <p class="card-why">Why customers ask this: the Collections page in the dashboard can't sort by volume across all collections and its CSV export is page-limited. These counters give you the same numbers, unbounded, sortable however you like.</p>
       <div class="table-scroll" id="collectionsTable"></div>
-    </div>
+    </details>
 
-    <div class="card panel" id="cardRaw">
-      <div class="card-head"><h2 style="margin:0">All series</h2></div>
+    <details class="card panel card-details" id="cardRaw">
+      <summary class="card-head"><span class="card-title"><h2 style="margin:0;display:inline">All series</h2></span><span class="card-badge" id="rawBadge"></span></summary>
       <p class="card-why">Every metric this payload contained, for anything the cards above don't cover.</p>
       <div class="search-row"><input type="text" id="rawSearch" placeholder="filter by metric name, task, or collection…" /></div>
       <div class="table-scroll" id="rawTable"></div>
-    </div>
+    </details>
   </section>
 
   <section id="wireIn">
@@ -353,6 +363,7 @@
     captured_in_docs_total: { type: "counter", group: "capture" },
     captured_out_bytes_total: { type: "counter", group: "capture" },
     captured_out_docs_total: { type: "counter", group: "capture" },
+    derived_bytes_behind: { type: "gauge", group: "derive" },
     derived_in_bytes_total: { type: "counter", group: "derive" },
     derived_in_docs_total: { type: "counter", group: "derive" },
     derived_last_source_published_at_time_seconds: { type: "gauge", group: "derive" },
@@ -363,6 +374,7 @@
     logged_errors_total: { type: "counter", group: "log" },
     logged_failures_total: { type: "counter", group: "log" },
     logged_warnings_total: { type: "counter", group: "log" },
+    materialized_bytes_behind: { type: "gauge", group: "materialize" },
     materialized_in_bytes_total: { type: "counter", group: "materialize" },
     materialized_in_docs_total: { type: "counter", group: "materialize" },
     materialized_last_source_published_at_time_seconds: { type: "gauge", group: "materialize" },
@@ -446,6 +458,10 @@
     return series.filter(function (s) { return s.name === name; });
   }
 
+  function pluralize(n, noun) {
+    return n + " " + noun + (n === 1 ? "" : "s");
+  }
+
   function sumBy(seriesList, keyFn) {
     var out = {};
     seriesList.forEach(function (s) {
@@ -481,12 +497,17 @@
     return (seconds < 0 ? "in " : "") + out + (seconds < 0 ? "" : " behind");
   }
 
-  function lagChip(seconds) {
-    var cls, label;
-    if (seconds < 300) { cls = "chip-good"; label = "On time"; }
-    else if (seconds < 3600) { cls = "chip-warn"; label = "Delayed"; }
-    else { cls = "chip-crit"; label = "Critical"; }
-    return '<span class="chip ' + cls + '">' + label + "</span>";
+  function lagSeverity(bytesBehind, seconds) {
+    // A real bytes-behind reading is an actual queue depth (runtime v2 only) and outranks the
+    // timestamp-gap heuristic below, which can't tell "stuck" apart from "quiet and caught up".
+    if (bytesBehind != null) {
+      if (bytesBehind >= 1024 * 1024 * 1024) return { level: 2, cls: "chip-crit", label: "Far behind" };
+      if (bytesBehind >= 10 * 1024 * 1024) return { level: 1, cls: "chip-warn", label: "Behind" };
+      return { level: 0, cls: "chip-good", label: "Caught up" };
+    }
+    if (seconds >= 3600) return { level: 2, cls: "chip-crit", label: "Critical" };
+    if (seconds >= 300) return { level: 1, cls: "chip-warn", label: "Delayed" };
+    return { level: 0, cls: "chip-good", label: "On time" };
   }
 
   function errorChip(count) {
@@ -531,6 +552,18 @@
 
   function renderLag(series) {
     var nowSec = Date.now() / 1000;
+
+    // Both *_last_source_published_at_time_seconds and *_bytes_behind carry task+collection
+    // labels for the same binding/transform, so that pair is a reliable join key across the two.
+    function joinKey(labels) { return (labels.task || "") + " " + (labels.collection || ""); }
+
+    var bytesBehindMap = {};
+    ["materialized_bytes_behind", "derived_bytes_behind"].forEach(function (name) {
+      byMetric(series, name).forEach(function (s) {
+        if (isFinite(s.value)) bytesBehindMap[joinKey(s.labels)] = s.value;
+      });
+    });
+
     var rows = [];
     [
       ["materialized_last_source_published_at_time_seconds", "Materialization"],
@@ -538,18 +571,38 @@
     ].forEach(function (pair) {
       byMetric(series, pair[0]).forEach(function (s) {
         if (!isFinite(s.value) || s.value <= 0) return;
-        rows.push({ kind: pair[1], entity: entityLabel(s.labels), lag: nowSec - s.value });
+        var rawBehind = bytesBehindMap[joinKey(s.labels)];
+        var bytesBehind = (typeof rawBehind === "number") ? rawBehind : null;
+        var lag = nowSec - s.value;
+        rows.push({ kind: pair[1], entity: entityLabel(s.labels), lag: lag, bytesBehind: bytesBehind, severity: lagSeverity(bytesBehind, lag) });
       });
     });
-    rows.sort(function (a, b) { return b.lag - a.lag; });
+    rows.sort(function (a, b) {
+      if (a.severity.level !== b.severity.level) return b.severity.level - a.severity.level;
+      if ((a.bytesBehind != null) !== (b.bytesBehind != null)) return a.bytesBehind != null ? -1 : 1;
+      if (a.bytesBehind != null) return b.bytesBehind - a.bytesBehind;
+      return b.lag - a.lag;
+    });
+
+    var critCount = rows.filter(function (r) { return r.severity.level === 2; }).length;
+    var warnCount = rows.filter(function (r) { return r.severity.level === 1; }).length;
+    var badge = document.getElementById("lagBadge");
+    badge.textContent = !rows.length ? "No data"
+      : critCount ? critCount + " critical" + (warnCount ? ", " + warnCount + " delayed" : "")
+      : warnCount ? warnCount + " delayed"
+      : rows.length + " on time";
+    badge.className = "card-badge" + (critCount || warnCount ? " has-issues" : "");
+    document.getElementById("cardLag").open = critCount > 0 || warnCount > 0;
 
     var el = document.getElementById("lagTable");
     if (!rows.length) return renderEmpty(el, "No *_last_source_published_at_time_seconds gauges found in this payload.");
     el.innerHTML =
-      "<table><thead><tr><th>Task</th><th>Kind</th><th class=\"num\">Lag</th><th class=\"num\">Status</th></tr></thead><tbody>" +
+      "<table><thead><tr><th>Task</th><th>Kind</th><th class=\"num\">Time since last data</th><th class=\"num\">Bytes behind</th><th class=\"num\">Status</th></tr></thead><tbody>" +
       rows.map(function (r) {
+        var behindCell = r.bytesBehind != null ? formatBytes(r.bytesBehind) : "—";
         return "<tr><td class=\"entity-name\">" + escapeHtml(r.entity) + "</td><td>" + r.kind +
-          "</td><td class=\"num\">" + formatDuration(r.lag) + "</td><td class=\"num\">" + lagChip(r.lag) + "</td></tr>";
+          "</td><td class=\"num\">" + formatDuration(r.lag) + "</td><td class=\"num\">" + behindCell +
+          "</td><td class=\"num\"><span class=\"chip " + r.severity.cls + "\">" + r.severity.label + "</span></td></tr>";
       }).join("") + "</tbody></table>";
   }
 
@@ -565,6 +618,11 @@
       return { task: t, captured: c, materialized: m, total: c + m };
     });
     rows.sort(function (a, b) { return b.total - a.total; });
+
+    var totalBytes = rows.reduce(function (sum, r) { return sum + r.total; }, 0);
+    var volumeBadge = document.getElementById("volumeBadge");
+    volumeBadge.textContent = rows.length ? pluralize(rows.length, "task") + ", " + formatBytes(totalBytes) + " moved" : "No data";
+    document.getElementById("cardVolume").open = false;
 
     var el = document.getElementById("volumeTable");
     if (!rows.length) return renderEmpty(el, "No captured_out_bytes_total / materialized_out_bytes_total counters found in this payload.");
@@ -589,6 +647,14 @@
     });
     rows.sort(function (a, b) { return b.weight - a.weight || b.warnings - a.warnings; });
 
+    var flaggedCount = rows.filter(function (r) { return (r.errors + r.failures) > 0; }).length;
+    var errorsBadge = document.getElementById("errorsBadge");
+    errorsBadge.textContent = !rows.length ? "No data"
+      : flaggedCount ? flaggedCount + " of " + rows.length + " flagged"
+      : "Clean across " + pluralize(rows.length, "task");
+    errorsBadge.className = "card-badge" + (flaggedCount ? " has-issues" : "");
+    document.getElementById("cardErrors").open = flaggedCount > 0;
+
     var el = document.getElementById("errorsTable");
     if (!rows.length) return renderEmpty(el, "No logged_errors_total / logged_warnings_total / logged_failures_total counters found in this payload.");
     el.innerHTML =
@@ -612,6 +678,10 @@
       return { collection: c, written: w, read: r, total: w + r };
     });
     rows.sort(function (a, b) { return b.total - a.total; });
+
+    var collectionsBadge = document.getElementById("collectionsBadge");
+    collectionsBadge.textContent = rows.length ? pluralize(rows.length, "collection") : "No data";
+    document.getElementById("cardCollections").open = false;
 
     var el = document.getElementById("collectionsTable");
     if (!rows.length) return renderEmpty(el, "No written_to_me_bytes_total / read_from_me_bytes_total counters found in this payload.");
@@ -673,6 +743,11 @@
     renderErrors(series);
     renderCollections(series);
     renderRaw(series, document.getElementById("rawSearch").value);
+
+    var rawBadge = document.getElementById("rawBadge");
+    rawBadge.textContent = series.length ? formatCount(series.length) + " series" : "No data";
+    document.getElementById("cardRaw").open = false;
+
     document.getElementById("shareRow").style.display = lastRawText ? "flex" : "none";
     document.getElementById("resultsEmptyHint").style.display = "none";
     document.getElementById("resultsWrap").classList.add("show");
