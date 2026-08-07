@@ -261,10 +261,13 @@
     </div>
   </section>
 
-  <section id="resultsWrap">
+  <section id="resultsIntro">
     <h2 style="margin-top:0">2 · What customers usually look at</h2>
     <p class="section-sub">Every card below is a real, recurring question from Estuary support and community threads — not a hypothetical dashboard.</p>
+    <p class="empty-state" id="resultsEmptyHint">Connect above (or paste metrics output) to see this populate.</p>
+  </section>
 
+  <section id="resultsWrap">
     <div class="status-msg info" id="sharedBanner" style="display:none">
       <strong>You're viewing metrics shared as a link.</strong> Nothing here was sent to any server —
       the data lives only in the URL itself. Treat this link like you would a screenshot of this data.
@@ -671,6 +674,7 @@
     renderCollections(series);
     renderRaw(series, document.getElementById("rawSearch").value);
     document.getElementById("shareRow").style.display = lastRawText ? "flex" : "none";
+    document.getElementById("resultsEmptyHint").style.display = "none";
     document.getElementById("resultsWrap").classList.add("show");
     document.getElementById("resultsWrap").scrollIntoView({ behavior: "smooth", block: "start" });
   }
