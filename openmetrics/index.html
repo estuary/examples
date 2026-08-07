@@ -1,0 +1,867 @@
+<title>OpenMetrics Explorer — Estuary</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #F6F7FB;
+    --bg-alt: #ECEEF5;
+    --surface: #FFFFFF;
+    --surface-border: #DDE1ED;
+    --ink: #16233A;
+    --ink-secondary: #4B5875;
+    --ink-muted: #7C879E;
+    --accent: #4A5DD9;
+    --accent-strong: #3646B8;
+    --accent-ink: #FFFFFF;
+    --teal: #1F9D7C;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --status-good: #1F9D7C;
+    --status-good-bg: #E3F7F1;
+    --status-warn: #A6650B;
+    --status-warn-bg: #FCF1DD;
+    --status-crit: #B23A33;
+    --status-crit-bg: #FBE7E5;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(16,30,54,0.06), 0 4px 16px rgba(16,30,54,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E2138;
+      --bg-alt: #0A1930;
+      --surface: #152943;
+      --surface-border: #274063;
+      --ink: #ECF1FA;
+      --ink-secondary: #B7C2D6;
+      --ink-muted: #8493AC;
+      --accent: #93A1F5;
+      --accent-strong: #B2BDFA;
+      --accent-ink: #0E2138;
+      --teal: #5FD3C4;
+      --status-good: #5FD3C4;
+      --status-good-bg: #10352F;
+      --status-warn: #E8B65B;
+      --status-warn-bg: #3B2C10;
+      --status-crit: #F0847C;
+      --status-crit-bg: #3D2019;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E2138; --bg-alt: #0A1930; --surface: #152943; --surface-border: #274063;
+    --ink: #ECF1FA; --ink-secondary: #B7C2D6; --ink-muted: #8493AC;
+    --accent: #93A1F5; --accent-strong: #B2BDFA; --accent-ink: #0E2138; --teal: #5FD3C4;
+    --status-good: #5FD3C4; --status-good-bg: #10352F;
+    --status-warn: #E8B65B; --status-warn-bg: #3B2C10;
+    --status-crit: #F0847C; --status-crit-bg: #3D2019;
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F7FB; --bg-alt: #ECEEF5; --surface: #FFFFFF; --surface-border: #DDE1ED;
+    --ink: #16233A; --ink-secondary: #4B5875; --ink-muted: #7C879E;
+    --accent: #4A5DD9; --accent-strong: #3646B8; --accent-ink: #FFFFFF; --teal: #1F9D7C;
+    --status-good: #1F9D7C; --status-good-bg: #E3F7F1;
+    --status-warn: #A6650B; --status-warn-bg: #FCF1DD;
+    --status-crit: #B23A33; --status-crit-bg: #FBE7E5;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans);
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 0 20px 80px; }
+  a { color: var(--accent); }
+
+  header.top {
+    background: var(--bg-alt); border-bottom: 1px solid var(--surface-border);
+    padding: 28px 20px 26px;
+  }
+  header.top .inner { max-width: 920px; margin: 0 auto; }
+  .eyebrow {
+    font: 700 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--teal); margin: 0 0 10px;
+  }
+  h1 { font: 700 26px/1.25 var(--mono); letter-spacing: -0.01em; margin: 0 0 8px; text-wrap: balance; }
+  .tagline { color: var(--ink-secondary); max-width: 62ch; margin: 0; font-size: 15px; }
+  .tagline a { color: var(--ink-secondary); text-decoration-color: var(--surface-border); }
+
+  section { margin-top: 34px; }
+  h2 {
+    font: 700 15px/1.3 var(--mono); text-transform: uppercase; letter-spacing: .04em;
+    margin: 0 0 4px; color: var(--ink);
+  }
+  .section-sub { color: var(--ink-muted); font-size: 13.5px; margin: 0 0 16px; max-width: 68ch; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px;
+  }
+
+  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-secondary); margin-bottom: 6px; }
+  .field { margin-bottom: 16px; }
+  .field-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .field-row .field { flex: 1 1 220px; }
+  input[type="text"], input[type="password"], textarea {
+    width: 100%; font: 14px/1.4 var(--mono); color: var(--ink);
+    background: var(--bg); border: 1px solid var(--surface-border); border-radius: 8px;
+    padding: 10px 12px; outline: none;
+  }
+  input:focus, textarea:focus, button:focus-visible, .copy-btn:focus-visible {
+    border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+  .hint { font-size: 12px; color: var(--ink-muted); margin-top: 6px; }
+  textarea { min-height: 120px; resize: vertical; font-size: 12.5px; }
+
+  .btn {
+    appearance: none; border: none; cursor: pointer; font: 600 13.5px var(--sans);
+    padding: 10px 18px; border-radius: 8px; background: var(--accent); color: var(--accent-ink);
+  }
+  .btn:hover { background: var(--accent-strong); }
+  .btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--surface-border); }
+  .btn.secondary:hover { border-color: var(--accent); }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  .status-msg { margin-top: 14px; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; display: none; }
+  .status-msg.show { display: block; }
+  .status-msg.info { background: var(--bg-alt); color: var(--ink-secondary); border: 1px solid var(--surface-border); }
+  .status-msg.error { background: var(--status-warn-bg); color: var(--status-warn); border: 1px solid transparent; }
+  .status-msg code { font-family: var(--mono); }
+
+  details.paste-box { margin-top: 18px; }
+  details.paste-box > summary {
+    cursor: pointer; font: 600 13px var(--sans); color: var(--accent); list-style: none;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  details.paste-box > summary::-webkit-details-marker { display: none; }
+  details.paste-box > summary::before { content: "▸"; display: inline-block; transition: transform .15s; }
+  details.paste-box[open] > summary::before { transform: rotate(90deg); }
+  details.paste-box .paste-inner { margin-top: 12px; }
+
+  #resultsWrap { display: none; }
+  #resultsWrap.show { display: block; }
+
+  .summary-strip {
+    display: flex; gap: 28px; flex-wrap: wrap; padding: 16px 22px; margin-bottom: 24px;
+    background: var(--bg-alt); border: 1px solid var(--surface-border); border-radius: var(--radius);
+  }
+  .summary-stat .num { font: 700 22px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+  .summary-stat .lbl { font-size: 11.5px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+
+  .card { margin-bottom: 22px; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .card-why {
+    font-size: 12.5px; color: var(--ink-muted); margin: 6px 0 16px; padding-left: 12px;
+    border-left: 2px solid var(--surface-border);
+  }
+  .empty-state { color: var(--ink-muted); font-size: 13.5px; padding: 10px 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--surface-border); }
+  th { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .03em; color: var(--ink-muted); }
+  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .table-scroll { overflow-x: auto; }
+  .entity-name { font-family: var(--mono); font-size: 12.5px; }
+  .table-note { font-size: 12px; color: var(--ink-muted); margin-top: 10px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px;
+    border-radius: 999px; font: 600 11.5px/1.6 var(--sans); white-space: nowrap;
+  }
+  .chip::before { content: "●"; font-size: 8px; }
+  .chip-good { color: var(--status-good); background: var(--status-good-bg); }
+  .chip-warn { color: var(--status-warn); background: var(--status-warn-bg); }
+  .chip-crit { color: var(--status-crit); background: var(--status-crit-bg); }
+
+  .code-block { position: relative; margin: 10px 0 4px; }
+  pre {
+    background: var(--bg-alt); border: 1px solid var(--surface-border); border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto; font: 12.5px/1.6 var(--mono); margin: 0; color: var(--ink);
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px; font: 600 11px var(--sans);
+    background: var(--surface); border: 1px solid var(--surface-border); color: var(--ink-secondary);
+    border-radius: 6px; padding: 5px 10px; cursor: pointer;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .wire-tabs { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .wire-tab {
+    font: 600 12px var(--sans); padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    background: var(--bg-alt); color: var(--ink-secondary); border: 1px solid var(--surface-border);
+  }
+  .wire-tab.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .wire-pane { display: none; }
+  .wire-pane.active { display: block; }
+
+  .search-row { margin-bottom: 12px; }
+  .search-row input { max-width: 320px; }
+
+  footer.bottom {
+    max-width: 920px; margin: 40px auto 0; padding: 20px 20px 0; color: var(--ink-muted);
+    font-size: 12.5px; border-top: 1px solid var(--surface-border);
+  }
+  footer.bottom a { color: var(--ink-muted); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top">
+  <div class="inner">
+    <p class="eyebrow">Estuary · OpenMetrics API</p>
+    <h1>OpenMetrics Explorer</h1>
+    <p class="tagline">
+      Point this at your tenant's metrics and see the questions other Estuary customers
+      actually ask with this data — pipeline freshness, data volume, error rates, and which
+      collections are busiest — before you build your own dashboards.
+      Full reference: <a href="https://docs.estuary.dev/reference/openmetrics-api/" target="_blank" rel="noopener">docs.estuary.dev/reference/openmetrics-api</a>
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <section id="connect">
+    <h2>1 · Connect</h2>
+    <p class="section-sub">
+      Nothing here leaves your browser except the optional live-fetch call, which goes straight
+      from your browser to Estuary's API. Your token is never sent anywhere else and is not saved.
+    </p>
+    <div class="panel">
+      <div class="field-row">
+        <div class="field">
+          <label for="prefixInput">Tenant prefix</label>
+          <input type="text" id="prefixInput" placeholder="acmeCo/" autocomplete="off" spellcheck="false" />
+          <p class="hint">Your whole tenant (<code>acmeCo/</code>) or a subset (<code>acmeCo/sub/path/</code>). Trailing slash is part of the prefix.</p>
+        </div>
+        <div class="field">
+          <label for="tokenInput">Access token <span style="font-weight:400;color:var(--ink-muted)">(optional — only needed for live fetch)</span></label>
+          <input type="password" id="tokenInput" placeholder="paste an access token" autocomplete="off" spellcheck="false" />
+          <p class="hint">Copy it from Admin → CLI-API → Access Token in the <a href="https://dashboard.estuary.dev/admin/api" target="_blank" rel="noopener">Estuary dashboard</a> (shown live, no generation step). It expires in about an hour — copy it right before you use it, not ahead of time.</p>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="liveFetchBtn">Try live fetch</button>
+        <span class="hint" style="margin:0">Most browsers block this — see why below — but it's worth a try.</span>
+      </div>
+      <div class="status-msg" id="statusMsg"></div>
+
+      <details class="paste-box" id="pasteBox">
+        <summary>Or paste metrics output directly</summary>
+        <div class="paste-inner">
+          <p class="hint" style="margin-top:0">
+            Run the curl command in the "Wire it in" section below (or copy from an existing
+            Prometheus "Explore" view or a raw scrape), then paste the plain-text output here.
+          </p>
+          <div class="field">
+            <textarea id="pasteInput" placeholder="# HELP captured_out_docs_total ...&#10;# TYPE captured_out_docs_total counter&#10;captured_out_docs_total{task=&quot;acmeCo/source-postgres&quot;} 48213"></textarea>
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="parseBtn">Parse metrics</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="resultsWrap">
+    <h2 style="margin-top:0">2 · What customers usually look at</h2>
+    <p class="section-sub">Every card below is a real, recurring question from Estuary support and community threads — not a hypothetical dashboard.</p>
+
+    <div class="status-msg info" id="sharedBanner" style="display:none">
+      <strong>You're viewing metrics shared as a link.</strong> Nothing here was sent to any server —
+      the data lives only in the URL itself. Treat this link like you would a screenshot of this data.
+    </div>
+
+    <div class="summary-strip" id="summaryStrip"></div>
+
+    <div class="btn-row" id="shareRow" style="margin-bottom:24px">
+      <button class="btn secondary" id="shareLinkBtn">Copy shareable link</button>
+      <span class="hint" style="margin:0">Bakes this data into the link so anyone who opens it sees these same results immediately — nothing is sent to any server to make that work.</span>
+    </div>
+
+    <div class="card panel" id="cardLag">
+      <div class="card-head"><h2 style="margin:0">Pipeline freshness</h2></div>
+      <p class="card-why">Why customers ask this: "is my materialization/derivation caught up?" is the single most common OpenMetrics question — teams compare <code>*_last_source_published_at_time_seconds</code> against the current time to catch silent lag before a destination goes stale.</p>
+      <div class="table-scroll" id="lagTable"></div>
+      <p class="table-note">Thresholds shown (&lt;5m good, 5m–1h delayed, &gt;1h critical) are starting points, not Estuary defaults — tune them to your own SLA. Note this measures <em>reporting</em> latency: if the metrics pipeline itself is delayed, a task can look stale while data is actually flowing.</p>
+    </div>
+
+    <div class="card panel" id="cardVolume">
+      <div class="card-head"><h2 style="margin:0">Data moved this month</h2></div>
+      <p class="card-why">Why customers ask this: "how many bytes have moved, and is the backfill done?" Byte/doc counters answer both — compare captured vs. materialized totals per task to spot a backfill still catching up.</p>
+      <div class="table-scroll" id="volumeTable"></div>
+      <p class="table-note">Counters are cumulative <strong>month-to-date</strong> and reset at the start of each calendar month — to measure a shorter window, snapshot this endpoint twice and diff the values (or let Prometheus's <code>rate()</code> do it for you).</p>
+    </div>
+
+    <div class="card panel" id="cardErrors">
+      <div class="card-head"><h2 style="margin:0">Errors &amp; warnings by task</h2></div>
+      <p class="card-why">Why customers ask this: alerting on raw error counts. One real caveat worth knowing: <code>logged_failures_total</code> can include non-actionable failures like inferred-schema violations — pair it with Estuary's built-in shard-failure alerts (which only fire on repeated failures of the same build) rather than alerting on the raw count alone.</p>
+      <div class="table-scroll" id="errorsTable"></div>
+    </div>
+
+    <div class="card panel" id="cardCollections">
+      <div class="card-head"><h2 style="margin:0">Busiest collections</h2></div>
+      <p class="card-why">Why customers ask this: the Collections page in the dashboard can't sort by volume across all collections and its CSV export is page-limited. These counters give you the same numbers, unbounded, sortable however you like.</p>
+      <div class="table-scroll" id="collectionsTable"></div>
+    </div>
+
+    <div class="card panel" id="cardRaw">
+      <div class="card-head"><h2 style="margin:0">All series</h2></div>
+      <p class="card-why">Every metric this payload contained, for anything the cards above don't cover.</p>
+      <div class="search-row"><input type="text" id="rawSearch" placeholder="filter by metric name, task, or collection…" /></div>
+      <div class="table-scroll" id="rawTable"></div>
+    </div>
+  </section>
+
+  <section id="wireIn">
+    <h2>3 · Wire it into your own stack</h2>
+    <p class="section-sub">Prefilled with your prefix above. <code>$ACCESS_TOKEN</code> stays as a placeholder — nothing you type into the token field is ever written into these snippets.</p>
+    <div class="panel">
+      <div class="wire-tabs">
+        <div class="wire-tab active" data-tab="curl">curl</div>
+        <div class="wire-tab" data-tab="prometheus">Prometheus</div>
+        <div class="wire-tab" data-tab="datadog">Datadog</div>
+      </div>
+      <div class="wire-pane active" data-pane="curl">
+        <div class="code-block"><button class="copy-btn" data-copy-target="curlSnippet">Copy</button><pre id="curlSnippet"></pre></div>
+      </div>
+      <div class="wire-pane" data-pane="prometheus">
+        <div class="code-block"><button class="copy-btn" data-copy-target="promSnippet">Copy</button><pre id="promSnippet"></pre></div>
+      </div>
+      <div class="wire-pane" data-pane="datadog">
+        <div class="code-block"><button class="copy-btn" data-copy-target="ddSnippet">Copy</button><pre id="ddSnippet"></pre></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="bottom">
+  <p>Built from real support/community threads about the OpenMetrics API, not hypothetical examples. Full metric reference and Grafana/Datadog walkthroughs live at
+    <a href="https://docs.estuary.dev/reference/openmetrics-api/" target="_blank" rel="noopener">docs.estuary.dev/reference/openmetrics-api</a>.</p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var API_BASE = "https://agent-api-1084703453822.us-central1.run.app";
+
+  var METRIC_CATALOG = {
+    captured_in_bytes_total: { type: "counter", group: "capture" },
+    captured_in_docs_total: { type: "counter", group: "capture" },
+    captured_out_bytes_total: { type: "counter", group: "capture" },
+    captured_out_docs_total: { type: "counter", group: "capture" },
+    derived_in_bytes_total: { type: "counter", group: "derive" },
+    derived_in_docs_total: { type: "counter", group: "derive" },
+    derived_last_source_published_at_time_seconds: { type: "gauge", group: "derive" },
+    derived_out_bytes_total: { type: "counter", group: "derive" },
+    derived_out_docs_total: { type: "counter", group: "derive" },
+    derived_yield_bytes_total: { type: "counter", group: "derive" },
+    derived_yield_docs_total: { type: "counter", group: "derive" },
+    logged_errors_total: { type: "counter", group: "log" },
+    logged_failures_total: { type: "counter", group: "log" },
+    logged_warnings_total: { type: "counter", group: "log" },
+    materialized_in_bytes_total: { type: "counter", group: "materialize" },
+    materialized_in_docs_total: { type: "counter", group: "materialize" },
+    materialized_last_source_published_at_time_seconds: { type: "gauge", group: "materialize" },
+    materialized_load_bytes_total: { type: "counter", group: "materialize" },
+    materialized_load_docs_total: { type: "counter", group: "materialize" },
+    materialized_out_bytes_total: { type: "counter", group: "materialize" },
+    materialized_out_docs_total: { type: "counter", group: "materialize" },
+    read_by_me_bytes_total: { type: "counter", group: "collection" },
+    read_by_me_docs_total: { type: "counter", group: "collection" },
+    read_from_me_bytes_total: { type: "counter", group: "collection" },
+    read_from_me_docs_total: { type: "counter", group: "collection" },
+    txn_count_total: { type: "counter", group: "task" },
+    usage_seconds_total: { type: "counter", group: "task" },
+    written_by_me_bytes_total: { type: "counter", group: "collection" },
+    written_by_me_docs_total: { type: "counter", group: "collection" },
+    written_to_me_bytes_total: { type: "counter", group: "collection" },
+    written_to_me_docs_total: { type: "counter", group: "collection" }
+  };
+
+  var LABEL_PRIORITY = ["task", "collection", "source_collection", "binding", "name"];
+
+  // ---------- parsing ----------
+
+  function parseOpenMetrics(text) {
+    var lines = text.split(/\r?\n/);
+    var help = {};
+    var type = {};
+    var series = [];
+    var lineRe = /^([a-zA-Z_:][a-zA-Z0-9_:]*)(\{([^}]*)\})?\s+(\S+)(?:\s+(\d+))?\s*$/;
+    var labelRe = /([a-zA-Z_][a-zA-Z0-9_]*)="((?:\\.|[^"\\])*)"/g;
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      if (line[0] === "#") {
+        var helpM = line.match(/^#\s*HELP\s+(\S+)\s+(.*)$/);
+        if (helpM) { help[helpM[1]] = helpM[2]; continue; }
+        var typeM = line.match(/^#\s*TYPE\s+(\S+)\s+(\S+)$/);
+        if (typeM) { type[typeM[1]] = typeM[2]; continue; }
+        continue;
+      }
+      var m = line.match(lineRe);
+      if (!m) continue;
+      var name = m[1];
+      var labelStr = m[3] || "";
+      var rawValue = m[4];
+      var value;
+      if (rawValue === "+Inf") value = Infinity;
+      else if (rawValue === "-Inf") value = -Infinity;
+      else if (rawValue === "NaN") value = NaN;
+      else value = parseFloat(rawValue);
+
+      var labels = {};
+      var lm;
+      labelRe.lastIndex = 0;
+      while ((lm = labelRe.exec(labelStr))) {
+        labels[lm[1]] = lm[2].replace(/\\"/g, '"').replace(/\\n/g, "\n").replace(/\\\\/g, "\\");
+      }
+
+      series.push({
+        name: name,
+        labels: labels,
+        value: value,
+        type: type[name] || (METRIC_CATALOG[name] && METRIC_CATALOG[name].type) || "unknown",
+        help: help[name] || ""
+      });
+    }
+    return series;
+  }
+
+  function entityLabel(labels) {
+    for (var i = 0; i < LABEL_PRIORITY.length; i++) {
+      if (labels[LABEL_PRIORITY[i]]) return labels[LABEL_PRIORITY[i]];
+    }
+    var keys = Object.keys(labels);
+    if (!keys.length) return "(no labels)";
+    return keys.map(function (k) { return k + "=" + labels[k]; }).join(", ");
+  }
+
+  function byMetric(series, name) {
+    return series.filter(function (s) { return s.name === name; });
+  }
+
+  function sumBy(seriesList, keyFn) {
+    var out = {};
+    seriesList.forEach(function (s) {
+      var key = keyFn(s);
+      out[key] = (out[key] || 0) + (isFinite(s.value) ? s.value : 0);
+    });
+    return out;
+  }
+
+  // ---------- formatting ----------
+
+  function formatBytes(bytes) {
+    if (!isFinite(bytes)) return "—";
+    var units = ["B", "KB", "MB", "GB", "TB", "PB"];
+    var u = 0, v = Math.abs(bytes);
+    while (v >= 1024 && u < units.length - 1) { v /= 1024; u++; }
+    return (bytes < 0 ? "-" : "") + v.toFixed(u === 0 ? 0 : 2) + " " + units[u];
+  }
+
+  function formatCount(n) {
+    if (!isFinite(n)) return "—";
+    return Math.round(n).toLocaleString();
+  }
+
+  function formatDuration(seconds) {
+    if (!isFinite(seconds)) return "—";
+    var s = Math.abs(seconds);
+    var out;
+    if (s < 60) out = Math.round(s) + "s";
+    else if (s < 3600) out = (s / 60).toFixed(1) + "m";
+    else if (s < 86400) out = (s / 3600).toFixed(1) + "h";
+    else out = (s / 86400).toFixed(1) + "d";
+    return (seconds < 0 ? "in " : "") + out + (seconds < 0 ? "" : " behind");
+  }
+
+  function lagChip(seconds) {
+    var cls, label;
+    if (seconds < 300) { cls = "chip-good"; label = "On time"; }
+    else if (seconds < 3600) { cls = "chip-warn"; label = "Delayed"; }
+    else { cls = "chip-crit"; label = "Critical"; }
+    return '<span class="chip ' + cls + '">' + label + "</span>";
+  }
+
+  function errorChip(count) {
+    var cls, label;
+    if (count <= 0) { cls = "chip-good"; label = "Clean"; }
+    else if (count < 10) { cls = "chip-warn"; label = "Some"; }
+    else { cls = "chip-crit"; label = "Elevated"; }
+    return '<span class="chip ' + cls + '">' + label + "</span>";
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---------- rendering ----------
+
+  function renderEmpty(el, msg) {
+    el.innerHTML = '<p class="empty-state">' + escapeHtml(msg) + "</p>";
+  }
+
+  function renderSummary(series) {
+    var tasks = {}, collections = {};
+    series.forEach(function (s) {
+      if (s.labels.task) tasks[s.labels.task] = true;
+      if (s.labels.collection) collections[s.labels.collection] = true;
+    });
+    var metricNames = {};
+    series.forEach(function (s) { metricNames[s.name] = true; });
+
+    var stats = [
+      { num: series.length, lbl: "Series parsed" },
+      { num: Object.keys(metricNames).length, lbl: "Distinct metrics" },
+      { num: Object.keys(tasks).length, lbl: "Tasks seen" },
+      { num: Object.keys(collections).length, lbl: "Collections seen" }
+    ];
+    document.getElementById("summaryStrip").innerHTML = stats.map(function (s) {
+      return '<div class="summary-stat"><div class="num">' + formatCount(s.num) + '</div><div class="lbl">' + s.lbl + "</div></div>";
+    }).join("");
+  }
+
+  function renderLag(series) {
+    var nowSec = Date.now() / 1000;
+    var rows = [];
+    [
+      ["materialized_last_source_published_at_time_seconds", "Materialization"],
+      ["derived_last_source_published_at_time_seconds", "Derivation"]
+    ].forEach(function (pair) {
+      byMetric(series, pair[0]).forEach(function (s) {
+        if (!isFinite(s.value) || s.value <= 0) return;
+        rows.push({ kind: pair[1], entity: entityLabel(s.labels), lag: nowSec - s.value });
+      });
+    });
+    rows.sort(function (a, b) { return b.lag - a.lag; });
+
+    var el = document.getElementById("lagTable");
+    if (!rows.length) return renderEmpty(el, "No *_last_source_published_at_time_seconds gauges found in this payload.");
+    el.innerHTML =
+      "<table><thead><tr><th>Task</th><th>Kind</th><th class=\"num\">Lag</th><th class=\"num\">Status</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        return "<tr><td class=\"entity-name\">" + escapeHtml(r.entity) + "</td><td>" + r.kind +
+          "</td><td class=\"num\">" + formatDuration(r.lag) + "</td><td class=\"num\">" + lagChip(r.lag) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  function renderVolume(series) {
+    var captured = sumBy(byMetric(series, "captured_out_bytes_total"), function (s) { return entityLabel(s.labels); });
+    var materialized = sumBy(byMetric(series, "materialized_out_bytes_total"), function (s) { return entityLabel(s.labels); });
+    var tasks = {};
+    Object.keys(captured).forEach(function (t) { tasks[t] = true; });
+    Object.keys(materialized).forEach(function (t) { tasks[t] = true; });
+
+    var rows = Object.keys(tasks).map(function (t) {
+      var c = captured[t] || 0, m = materialized[t] || 0;
+      return { task: t, captured: c, materialized: m, total: c + m };
+    });
+    rows.sort(function (a, b) { return b.total - a.total; });
+
+    var el = document.getElementById("volumeTable");
+    if (!rows.length) return renderEmpty(el, "No captured_out_bytes_total / materialized_out_bytes_total counters found in this payload.");
+    el.innerHTML =
+      "<table><thead><tr><th>Task</th><th class=\"num\">Captured out</th><th class=\"num\">Materialized out</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        return "<tr><td class=\"entity-name\">" + escapeHtml(r.task) + "</td><td class=\"num\">" +
+          formatBytes(r.captured) + "</td><td class=\"num\">" + formatBytes(r.materialized) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  function renderErrors(series) {
+    var errors = sumBy(byMetric(series, "logged_errors_total"), function (s) { return entityLabel(s.labels); });
+    var warnings = sumBy(byMetric(series, "logged_warnings_total"), function (s) { return entityLabel(s.labels); });
+    var failures = sumBy(byMetric(series, "logged_failures_total"), function (s) { return entityLabel(s.labels); });
+    var tasks = {};
+    [errors, warnings, failures].forEach(function (m) { Object.keys(m).forEach(function (t) { tasks[t] = true; }); });
+
+    var rows = Object.keys(tasks).map(function (t) {
+      var e = errors[t] || 0, w = warnings[t] || 0, f = failures[t] || 0;
+      return { task: t, errors: e, warnings: w, failures: f, weight: e + f };
+    });
+    rows.sort(function (a, b) { return b.weight - a.weight || b.warnings - a.warnings; });
+
+    var el = document.getElementById("errorsTable");
+    if (!rows.length) return renderEmpty(el, "No logged_errors_total / logged_warnings_total / logged_failures_total counters found in this payload.");
+    el.innerHTML =
+      "<table><thead><tr><th>Task</th><th class=\"num\">Errors</th><th class=\"num\">Warnings</th><th class=\"num\">Failures</th><th class=\"num\">Status</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        return "<tr><td class=\"entity-name\">" + escapeHtml(r.task) + "</td><td class=\"num\">" + formatCount(r.errors) +
+          "</td><td class=\"num\">" + formatCount(r.warnings) + "</td><td class=\"num\">" + formatCount(r.failures) +
+          "</td><td class=\"num\">" + errorChip(r.errors + r.failures) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }
+
+  function renderCollections(series) {
+    var written = sumBy(byMetric(series, "written_to_me_bytes_total"), function (s) { return entityLabel(s.labels); });
+    var read = sumBy(byMetric(series, "read_from_me_bytes_total"), function (s) { return entityLabel(s.labels); });
+    var cols = {};
+    Object.keys(written).forEach(function (c) { cols[c] = true; });
+    Object.keys(read).forEach(function (c) { cols[c] = true; });
+
+    var rows = Object.keys(cols).map(function (c) {
+      var w = written[c] || 0, r = read[c] || 0;
+      return { collection: c, written: w, read: r, total: w + r };
+    });
+    rows.sort(function (a, b) { return b.total - a.total; });
+
+    var el = document.getElementById("collectionsTable");
+    if (!rows.length) return renderEmpty(el, "No written_to_me_bytes_total / read_from_me_bytes_total counters found in this payload.");
+    var shown = rows.slice(0, 15);
+    el.innerHTML =
+      "<table><thead><tr><th>Collection</th><th class=\"num\">Written</th><th class=\"num\">Read downstream</th></tr></thead><tbody>" +
+      shown.map(function (r) {
+        return "<tr><td class=\"entity-name\">" + escapeHtml(r.collection) + "</td><td class=\"num\">" +
+          formatBytes(r.written) + "</td><td class=\"num\">" + formatBytes(r.read) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+    if (rows.length > shown.length) {
+      el.innerHTML += '<p class="table-note">Showing top 15 of ' + rows.length + " collections by volume.</p>";
+    }
+  }
+
+  var lastSeries = [];
+  var lastRawText = "";
+
+  function toBase64Url(str) {
+    var b64 = btoa(unescape(encodeURIComponent(str)));
+    return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function fromBase64Url(b64url) {
+    var b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    return decodeURIComponent(escape(atob(b64)));
+  }
+
+  function renderRaw(series, filterText) {
+    var f = (filterText || "").toLowerCase();
+    var rows = series.filter(function (s) {
+      if (!f) return true;
+      var hay = s.name + " " + JSON.stringify(s.labels);
+      return hay.toLowerCase().indexOf(f) !== -1;
+    }).slice(0, 300);
+
+    var el = document.getElementById("rawTable");
+    if (!series.length) return renderEmpty(el, "Nothing parsed yet.");
+    if (!rows.length) return renderEmpty(el, "No series match \u201c" + filterText + "\u201d.");
+    el.innerHTML =
+      "<table><thead><tr><th>Metric</th><th>Labels</th><th class=\"num\">Value</th></tr></thead><tbody>" +
+      rows.map(function (s) {
+        var labelStr = Object.keys(s.labels).map(function (k) { return k + '="' + s.labels[k] + '"'; }).join(", ");
+        return "<tr><td class=\"entity-name\">" + escapeHtml(s.name) + '</td><td class="entity-name" style="color:var(--ink-muted)">' +
+          escapeHtml(labelStr) + '</td><td class="num">' + (isFinite(s.value) ? s.value.toLocaleString() : String(s.value)) + "</td></tr>";
+      }).join("") + "</tbody></table>";
+    if (series.length > 300 && !f) {
+      el.innerHTML += '<p class="table-note">Showing first 300 of ' + series.length + ' series — use the filter above to narrow down.</p>';
+    }
+  }
+
+  function renderAll(series, rawText) {
+    lastSeries = series;
+    lastRawText = rawText || "";
+    renderSummary(series);
+    renderLag(series);
+    renderVolume(series);
+    renderErrors(series);
+    renderCollections(series);
+    renderRaw(series, document.getElementById("rawSearch").value);
+    document.getElementById("shareRow").style.display = lastRawText ? "flex" : "none";
+    document.getElementById("resultsWrap").classList.add("show");
+    document.getElementById("resultsWrap").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  document.getElementById("shareLinkBtn").addEventListener("click", function () {
+    var btn = this;
+    if (!lastRawText) return;
+    var link = location.origin + location.pathname + "#d=" + toBase64Url(lastRawText);
+    var done = function () {
+      var original = btn.textContent;
+      btn.textContent = "Link copied";
+      setTimeout(function () { btn.textContent = original; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(done).catch(function () { fallbackCopy(link, done); });
+    } else {
+      fallbackCopy(link, done);
+    }
+  });
+
+  (function loadFromHash() {
+    var hash = location.hash;
+    if (hash.indexOf("#d=") !== 0) return;
+    var text;
+    try {
+      text = fromBase64Url(hash.slice(3));
+    } catch (e) {
+      return;
+    }
+    var series = parseOpenMetrics(text);
+    if (!series.length) return;
+    document.getElementById("sharedBanner").style.display = "block";
+    renderAll(series, text);
+  })();
+
+  document.getElementById("rawSearch").addEventListener("input", function (e) {
+    renderRaw(lastSeries, e.target.value);
+  });
+
+  // ---------- connect flow ----------
+
+  function normalizedPrefix() {
+    var v = document.getElementById("prefixInput").value.trim();
+    if (!v) v = "yourPrefix/";
+    if (v[0] === "/") v = v.slice(1);
+    if (v[v.length - 1] !== "/") v += "/";
+    return v;
+  }
+
+  function showStatus(kind, html) {
+    var el = document.getElementById("statusMsg");
+    el.className = "status-msg show " + kind;
+    el.innerHTML = html;
+  }
+
+  function hideStatus() {
+    document.getElementById("statusMsg").className = "status-msg";
+  }
+
+  document.getElementById("liveFetchBtn").addEventListener("click", function () {
+    var prefix = normalizedPrefix();
+    var token = document.getElementById("tokenInput").value.trim();
+    if (!token) {
+      showStatus("error", "Add an access token above first, or use \u201cpaste metrics output\u201d below instead.");
+      return;
+    }
+    var url = API_BASE + "/api/v1/metrics/" + prefix;
+    showStatus("info", "Fetching " + escapeHtml(url) + " …");
+
+    var controller = new AbortController();
+    var timeout = setTimeout(function () { controller.abort(); }, 10000);
+
+    fetch(url, { headers: { Authorization: "Bearer " + token }, signal: controller.signal })
+      .then(function (res) {
+        clearTimeout(timeout);
+        return res.text().then(function (body) { return { ok: res.ok, status: res.status, body: body }; });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          // A response came back at all, so this wasn't CORS — it's a real API error (bad token, bad prefix, etc).
+          showStatus(
+            "error",
+            "<strong>Estuary's API returned HTTP " + result.status + ".</strong> " +
+            escapeHtml(result.body.slice(0, 300)) +
+            "<br><span style=\"font-size:12px\">Double-check the prefix and access token above, or use the paste flow below instead.</span>"
+          );
+          document.getElementById("pasteBox").open = true;
+          return;
+        }
+        hideStatus();
+        renderAll(parseOpenMetrics(result.body), result.body);
+      })
+      .catch(function (err) {
+        clearTimeout(timeout);
+        var isAbort = err && err.name === "AbortError";
+        showStatus(
+          "error",
+          "<strong>Live fetch didn't make it through" + (isAbort ? " (timed out)" : "") + ".</strong> " +
+          (isAbort
+            ? "The request took too long — check your connection and try again, or use the paste flow below."
+            : "This endpoint doesn't currently send the CORS headers a browser requires to read the response — that's true whether this page is opened locally or hosted anywhere else, so it isn't a workaround. " +
+              "Use the <code>curl</code> command in \u201cWire it into your own stack\u201d below and paste its output into " +
+              "\u201cpaste metrics output\u201d above instead." +
+              "<br><span style=\"font-size:12px\">Raw error: " + escapeHtml(err.message) + "</span>")
+        );
+        document.getElementById("pasteBox").open = true;
+      });
+  });
+
+  document.getElementById("parseBtn").addEventListener("click", function () {
+    var text = document.getElementById("pasteInput").value;
+    if (!text.trim()) {
+      showStatus("error", "Paste some OpenMetrics text first — the output of the curl command below works directly.");
+      return;
+    }
+    var series = parseOpenMetrics(text);
+    if (!series.length) {
+      showStatus("error", "Couldn't find any metric lines in that text. Make sure you pasted the plain-text body, not a wrapped JSON or HTML response.");
+      return;
+    }
+    hideStatus();
+    renderAll(series, text);
+  });
+
+  // ---------- wire-in snippets ----------
+
+  function updateSnippets() {
+    var prefix = normalizedPrefix();
+    document.getElementById("curlSnippet").textContent =
+      "curl --location '" + API_BASE + "/api/v1/metrics/" + prefix + "' \\\n" +
+      "  --header \"Authorization: Bearer $ACCESS_TOKEN\"";
+
+    document.getElementById("promSnippet").textContent =
+      "global:\n" +
+      "  scrape_interval: 1m\n\n" +
+      "scrape_configs:\n" +
+      "  - job_name: estuary\n" +
+      "    scheme: https\n" +
+      "    bearer_token: $ACCESS_TOKEN\n" +
+      "    metrics_path: /api/v1/metrics/" + prefix + "\n" +
+      "    static_configs:\n" +
+      "      - targets: [" + API_BASE.replace("https://", "") + "]";
+
+    document.getElementById("ddSnippet").textContent =
+      "init_config: {}\n\n" +
+      "instances:\n" +
+      "  - openmetrics_endpoint: " + API_BASE + "/api/v1/metrics/" + prefix + "\n" +
+      "    namespace: estuary\n" +
+      "    min_collection_interval: 60\n" +
+      "    headers:\n" +
+      "      Authorization: Bearer $ACCESS_TOKEN\n" +
+      "    metrics:\n" +
+      "      - \".*\"";
+  }
+
+  document.getElementById("prefixInput").addEventListener("input", updateSnippets);
+  updateSnippets();
+
+  document.querySelectorAll(".wire-tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".wire-tab").forEach(function (t) { t.classList.remove("active"); });
+      document.querySelectorAll(".wire-pane").forEach(function (p) { p.classList.remove("active"); });
+      tab.classList.add("active");
+      document.querySelector('.wire-pane[data-pane="' + tab.dataset.tab + '"]').classList.add("active");
+    });
+  });
+
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var target = document.getElementById(btn.dataset.copyTarget);
+      var text = target.textContent;
+      var done = function () {
+        var original = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(function () { btn.textContent = original; }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
