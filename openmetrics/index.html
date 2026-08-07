@@ -316,7 +316,7 @@
 
   <section id="wireIn">
     <h2>3 · Wire it into your own stack</h2>
-    <p class="section-sub">Prefilled with your prefix above. <code>$ACCESS_TOKEN</code> stays as a placeholder — nothing you type into the token field is ever written into these snippets.</p>
+    <p class="section-sub">Prefilled with your prefix above. Once you type a token into the field in step 1, the <code>curl</code> command below fills it in too, so it's ready to run as-is; Prometheus and Datadog configs keep <code>$ACCESS_TOKEN</code> as a placeholder since those live in files you'd typically commit or share.</p>
     <div class="panel">
       <div class="wire-tabs">
         <div class="wire-tab active" data-tab="curl">curl</div>
@@ -803,9 +803,12 @@
 
   function updateSnippets() {
     var prefix = normalizedPrefix();
+    var token = document.getElementById("tokenInput").value.trim();
+    // Single-quoted so a token's own characters can't be interpreted by the shell (unlike the $ACCESS_TOKEN placeholder, this is a literal value once substituted).
+    var authHeader = token ? "'Authorization: Bearer " + token + "'" : "\"Authorization: Bearer $ACCESS_TOKEN\"";
     document.getElementById("curlSnippet").textContent =
       "curl --location '" + API_BASE + "/api/v1/metrics/" + prefix + "' \\\n" +
-      "  --header \"Authorization: Bearer $ACCESS_TOKEN\"";
+      "  --header " + authHeader;
 
     document.getElementById("promSnippet").textContent =
       "global:\n" +
@@ -831,6 +834,7 @@
   }
 
   document.getElementById("prefixInput").addEventListener("input", updateSnippets);
+  document.getElementById("tokenInput").addEventListener("input", updateSnippets);
   updateSnippets();
 
   document.querySelectorAll(".wire-tab").forEach(function (tab) {
