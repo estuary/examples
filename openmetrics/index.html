@@ -157,9 +157,9 @@
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--surface-border); }
   th { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .03em; color: var(--ink-muted); }
-  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 90px; }
   .table-scroll { overflow-x: auto; }
-  .entity-name { font-family: var(--mono); font-size: 12.5px; }
+  .entity-name { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
   .table-note { font-size: 12px; color: var(--ink-muted); margin-top: 10px; }
 
   .chip {
