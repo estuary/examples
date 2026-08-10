@@ -285,10 +285,11 @@
 
     <div class="summary-strip" id="summaryStrip"></div>
 
-    <div class="btn-row" id="shareRow" style="margin-bottom:24px">
+    <div class="btn-row" id="shareRow" style="margin-bottom:8px">
       <button class="btn secondary" id="shareLinkBtn">Copy shareable link</button>
-      <span class="hint" style="margin:0">Bakes this data into the link so anyone who opens it sees these same results immediately — nothing is sent to any server to make that work.</span>
+      <span class="hint" style="margin:0">Bakes this data into the link (compressed) so anyone who opens it sees these same results immediately — nothing is sent to any server to make that work.</span>
     </div>
+    <div class="status-msg" id="shareStatus" style="margin-bottom:24px"></div>
 
     <details class="card panel card-details" id="cardLag">
       <summary class="card-head"><span class="card-title"><h2 style="margin:0;display:inline">Pipeline freshness</h2></span><span class="card-badge" id="lagBadge"></span></summary>
@@ -326,7 +327,7 @@
 
   <section id="wireIn">
     <h2>3 · Wire it into your own stack</h2>
-    <p class="section-sub">Prefilled with your prefix above. Once you type a token into the field in step 1, the <code>curl</code> command below fills it in too, so it's ready to run as-is; Prometheus and Datadog configs keep <code>$ACCESS_TOKEN</code> as a placeholder since those live in files you'd typically commit or share.</p>
+    <p class="section-sub">Prefilled with your prefix above. Once you type a token into the field in step 1, the <code>curl</code> command below fills it in too, so it's ready to run as-is; Prometheus and Datadog configs keep <code>$ACCESS_TOKEN</code> as a placeholder since those live in files you'd typically commit or share. The <code>curl</code> command also copies its own output to your clipboard when it finishes — it tries <code>pbcopy</code>, <code>xclip</code>, <code>wl-copy</code>, then <code>clip.exe</code> in order and silently skips any that aren't installed — so you can paste straight into "paste metrics output" above or into Slack without a manual copy step.</p>
     <div class="panel">
       <div class="wire-tabs">
         <div class="wire-tab active" data-tab="curl">curl</div>
@@ -711,6 +712,81 @@
     return decodeURIComponent(escape(atob(b64)));
   }
 
+  // ---------- share-link compression ----------
+  // OpenMetrics text for a busy tenant is mostly repeated label strings (task=, collection=),
+  // so gzip routinely shrinks it 90%+ before it ever hits base64 — the difference between a link
+  // that pastes fine into Slack and one that doesn't. #dz= is the compressed format; #d= (below)
+  // is kept working forever so links already shared under the old format don't break.
+  var SAFE_LINK_CHARS = 8000;
+
+  function bytesToBase64Url(bytes) {
+    var CHUNK = 0x8000;
+    var parts = [];
+    for (var i = 0; i < bytes.length; i += CHUNK) {
+      parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK)));
+    }
+    var b64 = btoa(parts.join(""));
+    return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function base64UrlToBytes(b64url) {
+    var b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    var binary = atob(b64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  function readAllChunks(readableStream) {
+    var reader = readableStream.getReader();
+    var chunks = [];
+    function pump() {
+      return reader.read().then(function (result) {
+        if (result.done) {
+          var total = chunks.reduce(function (n, c) { return n + c.length; }, 0);
+          var out = new Uint8Array(total);
+          var offset = 0;
+          chunks.forEach(function (c) { out.set(c, offset); offset += c.length; });
+          return out;
+        }
+        chunks.push(result.value);
+        return pump();
+      });
+    }
+    return pump();
+  }
+
+  function gzipCompress(str) {
+    if (typeof CompressionStream === "undefined") return Promise.resolve(null);
+    try {
+      var cs = new CompressionStream("gzip");
+      var writer = cs.writable.getWriter();
+      writer.write(new TextEncoder().encode(str));
+      writer.close();
+      return readAllChunks(cs.readable);
+    } catch (e) {
+      return Promise.resolve(null);
+    }
+  }
+
+  function gzipDecompress(bytes) {
+    if (typeof DecompressionStream === "undefined") return Promise.reject(new Error("DecompressionStream unsupported"));
+    var ds = new DecompressionStream("gzip");
+    var writer = ds.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+    return readAllChunks(ds.readable).then(function (bytesOut) {
+      return new TextDecoder().decode(bytesOut);
+    });
+  }
+
+  function showShareStatus(kind, html) {
+    var el = document.getElementById("shareStatus");
+    el.className = "status-msg show " + kind;
+    el.innerHTML = html;
+  }
+
   function renderRaw(series, filterText) {
     var f = (filterText || "").toLowerCase();
     var rows = series.filter(function (s) {
@@ -757,21 +833,63 @@
   document.getElementById("shareLinkBtn").addEventListener("click", function () {
     var btn = this;
     if (!lastRawText) return;
-    var link = location.origin + location.pathname + "#d=" + toBase64Url(lastRawText);
-    var done = function () {
-      var original = btn.textContent;
-      btn.textContent = "Link copied";
-      setTimeout(function () { btn.textContent = original; }, 1600);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(link).then(done).catch(function () { fallbackCopy(link, done); });
-    } else {
-      fallbackCopy(link, done);
+    var baseUrl = location.origin + location.pathname;
+
+    function finish(hashPart, wasCompressed) {
+      var link = baseUrl + hashPart;
+      var tooBig = link.length > SAFE_LINK_CHARS;
+      var done = function () {
+        var original = btn.textContent;
+        btn.textContent = tooBig ? "Copied (" + formatCount(link.length) + " chars)" : "Link copied";
+        setTimeout(function () { btn.textContent = original; }, tooBig ? 3200 : 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(done).catch(function () { fallbackCopy(link, done); });
+      } else {
+        fallbackCopy(link, done);
+      }
+      if (tooBig) {
+        showShareStatus(
+          "error",
+          "<strong>This link is " + formatCount(link.length) + " characters" + (wasCompressed ? " even compressed" : "") + ".</strong> " +
+          "That's too long to paste reliably into a browser address bar or a Slack message — it's on your clipboard in case you need it somewhere size doesn't matter (a wiki page, a doc), " +
+          "but for Slack, copy the raw metrics text itself instead (the curl command above now copies its own output) and post it in a code block, or narrow things down with the filter in " +
+          "“All series” and re-copy — a smaller payload makes a smaller link."
+        );
+      } else {
+        document.getElementById("shareStatus").className = "status-msg";
+      }
     }
+
+    gzipCompress(lastRawText).then(function (bytes) {
+      if (bytes) finish("#dz=" + bytesToBase64Url(bytes), true);
+      else finish("#d=" + toBase64Url(lastRawText), false);
+    });
   });
 
   (function loadFromHash() {
     var hash = location.hash;
+    if (hash.indexOf("#dz=") === 0) {
+      var bytes;
+      try {
+        bytes = base64UrlToBytes(hash.slice(4));
+      } catch (e) {
+        return;
+      }
+      if (typeof DecompressionStream === "undefined") {
+        document.getElementById("sharedBanner").style.display = "block";
+        document.getElementById("sharedBanner").innerHTML =
+          "<strong>This link's data is compressed and your browser can't decompress it in-page.</strong> Try a current version of Chrome, Firefox, Edge, or Safari.";
+        return;
+      }
+      gzipDecompress(bytes).then(function (text) {
+        var series = parseOpenMetrics(text);
+        if (!series.length) return;
+        document.getElementById("sharedBanner").style.display = "block";
+        renderAll(series, text);
+      });
+      return;
+    }
     if (hash.indexOf("#d=") !== 0) return;
     var text;
     try {
@@ -883,7 +1001,8 @@
     var authHeader = token ? "'Authorization: Bearer " + token + "'" : "\"Authorization: Bearer $ACCESS_TOKEN\"";
     document.getElementById("curlSnippet").textContent =
       "curl --location '" + API_BASE + "/api/v1/metrics/" + prefix + "' \\\n" +
-      "  --header " + authHeader;
+      "  --header " + authHeader + " \\\n" +
+      "  | tee >(pbcopy 2>/dev/null || xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null || clip.exe 2>/dev/null)";
 
     document.getElementById("promSnippet").textContent =
       "global:\n" +
