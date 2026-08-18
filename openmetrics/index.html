@@ -293,7 +293,7 @@
 
     <details class="card panel card-details" id="cardLag">
       <summary class="card-head"><span class="card-title"><h2 style="margin:0;display:inline">Pipeline freshness</h2></span><span class="card-badge" id="lagBadge"></span></summary>
-      <p class="card-why">Why customers ask this: "is my materialization/derivation caught up?" is the single most common OpenMetrics question — teams compare <code>*_last_source_published_at_time_seconds</code> against the current time to catch silent lag before a destination goes stale. Tasks running on runtime v2 also report an actual bytes-behind gauge, a real backlog measurement rather than an inferred one, shown alongside it below when available.</p>
+      <p class="card-why">Why customers ask this: "is my capture/materialization/derivation caught up?" is the single most common OpenMetrics question — teams compare <code>captured_last_published_at_time_seconds</code> (captures) or <code>*_last_source_published_at_time_seconds</code> (materializations, derivations) against the current time to catch silent lag before a pipeline goes stale. Tasks running on runtime v2 also report an actual bytes-behind gauge for materializations and derivations, a real backlog measurement rather than an inferred one, shown alongside it below when available.</p>
       <div class="table-scroll" id="lagTable"></div>
       <p class="table-note">"Time since last data" (&lt;5m good, 5m–1h delayed, &gt;1h critical) measures <em>reporting</em> latency, not a confirmed backlog — a quiet, fully-caught-up task looks identical to a stuck one by this measure alone. "Bytes behind" is the more trustworthy signal where it's present: a real queue depth, reported only for tasks on runtime v2. A dash there doesn't mean zero — it means either not-yet-on-v2 or genuinely caught up (Estuary suppresses true zeroes here rather than assert false precision), so don't read a dash as confirmation nothing's wrong. Thresholds shown are starting points, not Estuary defaults — tune them to your own SLA.</p>
     </details>
@@ -362,12 +362,13 @@
   var METRIC_CATALOG = {
     captured_in_bytes_total: { type: "counter", group: "capture" },
     captured_in_docs_total: { type: "counter", group: "capture" },
+    captured_last_published_at_time_seconds: { type: "gauge", group: "capture", unit: "epoch_seconds" },
     captured_out_bytes_total: { type: "counter", group: "capture" },
     captured_out_docs_total: { type: "counter", group: "capture" },
     derived_bytes_behind: { type: "gauge", group: "derive" },
     derived_in_bytes_total: { type: "counter", group: "derive" },
     derived_in_docs_total: { type: "counter", group: "derive" },
-    derived_last_source_published_at_time_seconds: { type: "gauge", group: "derive" },
+    derived_last_source_published_at_time_seconds: { type: "gauge", group: "derive", unit: "epoch_seconds" },
     derived_out_bytes_total: { type: "counter", group: "derive" },
     derived_out_docs_total: { type: "counter", group: "derive" },
     derived_yield_bytes_total: { type: "counter", group: "derive" },
@@ -378,7 +379,7 @@
     materialized_bytes_behind: { type: "gauge", group: "materialize" },
     materialized_in_bytes_total: { type: "counter", group: "materialize" },
     materialized_in_docs_total: { type: "counter", group: "materialize" },
-    materialized_last_source_published_at_time_seconds: { type: "gauge", group: "materialize" },
+    materialized_last_source_published_at_time_seconds: { type: "gauge", group: "materialize", unit: "epoch_seconds" },
     materialized_load_bytes_total: { type: "counter", group: "materialize" },
     materialized_load_docs_total: { type: "counter", group: "materialize" },
     materialized_out_bytes_total: { type: "counter", group: "materialize" },
@@ -487,15 +488,27 @@
     return Math.round(n).toLocaleString();
   }
 
+  function durationMagnitude(seconds) {
+    var s = Math.abs(seconds);
+    if (s < 60) return Math.round(s) + "s";
+    if (s < 3600) return (s / 60).toFixed(1) + "m";
+    if (s < 86400) return (s / 3600).toFixed(1) + "h";
+    return (s / 86400).toFixed(1) + "d";
+  }
+
   function formatDuration(seconds) {
     if (!isFinite(seconds)) return "—";
-    var s = Math.abs(seconds);
-    var out;
-    if (s < 60) out = Math.round(s) + "s";
-    else if (s < 3600) out = (s / 60).toFixed(1) + "m";
-    else if (s < 86400) out = (s / 3600).toFixed(1) + "h";
-    else out = (s / 86400).toFixed(1) + "d";
-    return (seconds < 0 ? "in " : "") + out + (seconds < 0 ? "" : " behind");
+    return (seconds < 0 ? "in " : "") + durationMagnitude(seconds) + (seconds < 0 ? "" : " behind");
+  }
+
+  function formatAgo(seconds) {
+    if (!isFinite(seconds)) return "—";
+    return (seconds < 0 ? "in " : "") + durationMagnitude(seconds) + (seconds < 0 ? "" : " ago");
+  }
+
+  function formatEpochSeconds(seconds) {
+    if (!isFinite(seconds) || seconds <= 0) return "—";
+    return new Date(seconds * 1000).toLocaleString() + " (" + formatAgo(Date.now() / 1000 - seconds) + ")";
   }
 
   function lagSeverity(bytesBehind, seconds) {
@@ -567,6 +580,7 @@
 
     var rows = [];
     [
+      ["captured_last_published_at_time_seconds", "Capture"],
       ["materialized_last_source_published_at_time_seconds", "Materialization"],
       ["derived_last_source_published_at_time_seconds", "Derivation"]
     ].forEach(function (pair) {
@@ -596,7 +610,7 @@
     document.getElementById("cardLag").open = critCount > 0 || warnCount > 0;
 
     var el = document.getElementById("lagTable");
-    if (!rows.length) return renderEmpty(el, "No *_last_source_published_at_time_seconds gauges found in this payload.");
+    if (!rows.length) return renderEmpty(el, "No *_last_published_at_time_seconds or *_last_source_published_at_time_seconds gauges found in this payload.");
     el.innerHTML =
       "<table><thead><tr><th>Task</th><th>Kind</th><th class=\"num\">Time since last data</th><th class=\"num\">Bytes behind</th><th class=\"num\">Status</th></tr></thead><tbody>" +
       rows.map(function (r) {
@@ -802,8 +816,10 @@
       "<table><thead><tr><th>Metric</th><th>Labels</th><th class=\"num\">Value</th></tr></thead><tbody>" +
       rows.map(function (s) {
         var labelStr = Object.keys(s.labels).map(function (k) { return k + '="' + s.labels[k] + '"'; }).join(", ");
+        var isEpoch = METRIC_CATALOG[s.name] && METRIC_CATALOG[s.name].unit === "epoch_seconds";
+        var valCell = !isFinite(s.value) ? String(s.value) : isEpoch ? formatEpochSeconds(s.value) : s.value.toLocaleString();
         return "<tr><td class=\"entity-name\">" + escapeHtml(s.name) + '</td><td class="entity-name" style="color:var(--ink-muted)">' +
-          escapeHtml(labelStr) + '</td><td class="num">' + (isFinite(s.value) ? s.value.toLocaleString() : String(s.value)) + "</td></tr>";
+          escapeHtml(labelStr) + '</td><td class="num">' + valCell + "</td></tr>";
       }).join("") + "</tbody></table>";
     if (series.length > 300 && !f) {
       el.innerHTML += '<p class="table-note">Showing first 300 of ' + series.length + ' series — use the filter above to narrow down.</p>';
