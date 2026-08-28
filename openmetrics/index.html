@@ -589,7 +589,12 @@
         var rawBehind = bytesBehindMap[joinKey(s.labels)];
         var bytesBehind = (typeof rawBehind === "number") ? rawBehind : null;
         var lag = nowSec - s.value;
-        rows.push({ kind: pair[1], entity: entityLabel(s.labels), lag: lag, bytesBehind: bytesBehind, severity: lagSeverity(bytesBehind, lag) });
+        rows.push({
+          kind: pair[1],
+          task: s.labels.task || "(no task label)",
+          binding: s.labels.collection || s.labels.source_collection || s.labels.binding || "(no collection label)",
+          lag: lag, bytesBehind: bytesBehind, severity: lagSeverity(bytesBehind, lag)
+        });
       });
     });
     rows.sort(function (a, b) {
@@ -612,10 +617,10 @@
     var el = document.getElementById("lagTable");
     if (!rows.length) return renderEmpty(el, "No *_last_published_at_time_seconds or *_last_source_published_at_time_seconds gauges found in this payload.");
     el.innerHTML =
-      "<table><thead><tr><th>Task</th><th>Kind</th><th class=\"num\">Time since last data</th><th class=\"num\">Bytes behind</th><th class=\"num\">Status</th></tr></thead><tbody>" +
+      "<table><thead><tr><th>Task</th><th>Binding</th><th>Kind</th><th class=\"num\">Time since last data</th><th class=\"num\">Bytes behind</th><th class=\"num\">Status</th></tr></thead><tbody>" +
       rows.map(function (r) {
         var behindCell = r.bytesBehind != null ? formatBytes(r.bytesBehind) : "—";
-        return "<tr><td class=\"entity-name\">" + escapeHtml(r.entity) + "</td><td>" + r.kind +
+        return "<tr><td class=\"entity-name\">" + escapeHtml(r.task) + "</td><td class=\"entity-name\">" + escapeHtml(r.binding) + "</td><td>" + r.kind +
           "</td><td class=\"num\">" + formatDuration(r.lag) + "</td><td class=\"num\">" + behindCell +
           "</td><td class=\"num\"><span class=\"chip " + r.severity.cls + "\">" + r.severity.label + "</span></td></tr>";
       }).join("") + "</tbody></table>";
