@@ -1,3 +1,4 @@
+<meta charset="utf-8" />
 <title>OpenMetrics Explorer — Estuary</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
@@ -165,6 +166,9 @@
   .empty-state { color: var(--ink-muted); font-size: 13.5px; padding: 10px 0; }
 
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .lag-table { table-layout: fixed; min-width: 640px; }
+  .lag-table th.num { white-space: normal; line-height: 1.3; }
+  .lag-table td { overflow-wrap: anywhere; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--surface-border); }
   th { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .03em; color: var(--ink-muted); }
   td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 90px; }
@@ -617,7 +621,8 @@
     var el = document.getElementById("lagTable");
     if (!rows.length) return renderEmpty(el, "No *_last_published_at_time_seconds or *_last_source_published_at_time_seconds gauges found in this payload.");
     el.innerHTML =
-      "<table><thead><tr><th>Task</th><th>Binding</th><th>Kind</th><th class=\"num\">Time since last data</th><th class=\"num\">Bytes behind</th><th class=\"num\">Status</th></tr></thead><tbody>" +
+      "<table class=\"lag-table\"><colgroup><col style=\"width:20%\"><col style=\"width:22%\"><col style=\"width:11%\"><col style=\"width:16%\"><col style=\"width:14%\"><col style=\"width:17%\"></colgroup>" +
+      "<thead><tr><th>Task</th><th>Binding</th><th>Kind</th><th class=\"num\">Time since last data</th><th class=\"num\">Bytes behind</th><th class=\"num\">Status</th></tr></thead><tbody>" +
       rows.map(function (r) {
         var behindCell = r.bytesBehind != null ? formatBytes(r.bytesBehind) : "—";
         return "<tr><td class=\"entity-name\">" + escapeHtml(r.task) + "</td><td class=\"entity-name\">" + escapeHtml(r.binding) + "</td><td>" + r.kind +
