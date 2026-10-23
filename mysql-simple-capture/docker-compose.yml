@@ -1,0 +1,54 @@
+services:
+  datagen:
+    build: datagen
+    container_name: mysql-datagen
+    restart: unless-stopped
+
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: demo
+      MYSQL_USER: root
+      MYSQL_PASSWORD: mysql
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    hostname: mysql
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: demo
+
+    command:
+      - "--binlog-format=ROW"
+      - "--binlog-row-metadata=FULL"
+      - "--binlog-expire-logs-seconds=2592000"
+      - "--default-time-zone=+00:00"
+
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u root -pmysql -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 10s
+      retries: 120
+
+    volumes:
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    ports:
+      - "3306:3306"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: mysql-ngrok
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: 'tcp mysql:3306'
+    ports:
+      - "4040:4040"
